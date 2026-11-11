@@ -7,8 +7,8 @@
 #define VIAL_UNLOCK_COMBO_ROWS { 0, 1 }
 #define VIAL_UNLOCK_COMBO_COLS { 0, 1 }
 
-// BLE Micro Pro: uncomment to stop a new firmware from replacing the keymap stored on the keyboard
-// when the layers in keymap.c change (e.g. if you mostly edit the keymap in Vial).
+// Uncomment to stop a new firmware from replacing the keymap stored on the keyboard when the
+// layers in keymap.c change (e.g. if you mostly edit the keymap in Vial or Remap).
 // #define KEYMAP_SYNC_DISABLE
 
 // BLE Micro Pro: uncomment to put a half to sleep after this many minutes without a key press on

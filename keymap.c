@@ -134,14 +134,15 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
 
 #if defined(DYNAMIC_KEYMAP_ENABLE) && !defined(KEYMAP_SYNC_DISABLE)
 /*
- * BLE Micro Pro build: the firmware runs the keymap stored in its (emulated) EEPROM, which is
- * what Vial/Remap edit. keymaps[] above is only copied there when the EEPROM is reset, so flashing
- * a new build would otherwise keep running the old keymap.
+ * Both builds run the keymap stored in EEPROM, which is what Vial/Remap/VIA edit. keymaps[] above
+ * is only copied there when the EEPROM is reset: the BLE Micro Pro firmware never does that on its
+ * own after an update, and mainline VIA only does it for a build from a different day. So flashing
+ * a changed keymap could otherwise keep running the old one.
  *
  * To get the "edit keymap.c, build, flash, done" workflow, keep a fingerprint of keymaps[] in the
- * user EEPROM word and reload the EEPROM keymap whenever it changes. Changes made in Vial survive a
- * re-flash as long as the layers in this file stay the same. Define KEYMAP_SYNC_DISABLE in
- * config.h to turn this off. (The Pro Micro build has no VIA, so keymaps[] is always used there.)
+ * user EEPROM word and reload the EEPROM keymap whenever it changes. Live edits survive a re-flash
+ * as long as the layers in this file stay the same (on the Pro Micro, VIA itself still resets
+ * them for a build from another day). Define KEYMAP_SYNC_DISABLE in config.h to turn this off.
  */
 #    define SYNC_KEYMAP
 static uint32_t keymap_fingerprint(void) {

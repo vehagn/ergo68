@@ -9,7 +9,7 @@ for [BLE Micro Pros](https://github.com/sekigon-gonnoc/BLE-Micro-Pro) (Bluetooth
 
 | Setup                    | Left half     | Right half                                              | Between the halves | To the computer               | Firmware                                     |
 |--------------------------|---------------|---------------------------------------------------------|--------------------|-------------------------------|----------------------------------------------|
-| Wired                    | Pro Micro     | Pro Micro                                               | TRS or TRRS cable  | USB                           | `yushakobo_ergo68_ergo68.hex` on both halves |
+| Wired (the kit's chips)  | Pro Micro     | Pro Micro                                               | TRS or TRRS cable  | USB                           | `yushakobo_ergo68_ergo68.hex` on both halves |
 | Bluetooth in one half    | BLE Micro Pro | [LPME-IO](https://shop.yushakobo.jp/products/lpme-io2a) | 4-pole TRRS cable  | Bluetooth, or USB (left half) | `ble_micro_pro_ergo68.uf2` on the left half  |
 | Bluetooth in both halves | BLE Micro Pro | BLE Micro Pro                                           | Bluetooth          | Bluetooth, or USB (left half) | `ble_micro_pro_ergo68.uf2` on both halves    |
 
@@ -148,7 +148,9 @@ GitHub Codespace.
 3. The firmware appears in `build/` in the repo folder on your own machine. In a Codespace, right-click the file in
    the Explorer and choose **Download**.
 
-The QMK trees live in a Docker volume mounted at `/qmk`, so container rebuilds don't download them again. Flashing needs
+The QMK trees live in a Docker volume mounted at `/qmk`, so container rebuilds don't download them again. The BMP fork
+is based on an older QMK that wants Python packages the current QMK image lacks; `build.sh` installs those in a
+virtualenv inside the fork's folder the first time. Flashing needs
 the USB device, so do it on your own machine, not in the container.
 
 ### On GitHub
@@ -194,17 +196,27 @@ make ble_micro_pro:ergo68:uf2
 
 ## Wired: Pro Micro
 
-Both halves get the same `yushakobo_ergo68_ergo68.hex`; the PCB tells each half which side it is. Connect one half at a
-time with USB and put it in bootloader mode by pressing its reset switch (the Pro Micro then waits about 8 seconds for
-new firmware) or the `Boot` key. Then flash it with
-[QMK Toolbox](https://github.com/qmk/qmk_toolbox/releases) (open the `.hex`, tick *Auto-Flash*, press reset), with
-`make yushakobo/ergo68:ergo68:flash` from a QMK checkout, or on Linux with avrdude right after pressing reset:
+These are the controllers that come with the kit (ATmega32U4 Pro Micros with the Caterina bootloader). Both halves get
+the same `yushakobo_ergo68_ergo68.hex`; the PCB tells each half which side it is. Connect one half at a time with USB.
+
+The easiest way to flash is [Remap](https://remap-keys.app/), the web page Yushakobo's build guide uses (Chrome or Edge):
+
+1. Click **Flash Firmware** on Remap's front page and drop `yushakobo_ergo68_ergo68.hex` into the dialog.
+2. Choose the **caterina** bootloader and click **Flash**.
+3. When it asks for the serial port, press the half's reset switch, pick the port that appears and click **Connect**.
+   The Pro Micro only waits about 8 seconds after a reset, so be quick; Remap shows *successfully* when it's done.
+
+QMK Toolbox ([download](https://github.com/qmk/qmk_toolbox/releases): open the `.hex`, tick *Auto-Flash*, press reset)
+and `make yushakobo/ergo68:ergo68:flash` from a QMK checkout work too, as does avrdude on Linux right after a reset:
 
 ```bash
 avrdude -p atmega32u4 -c avr109 -P /dev/ttyACM0 -U flash:w:yushakobo_ergo68_ergo68.hex:i
 ```
 
-Then connect the halves with the TRS/TRRS cable and plug the left half into the computer.
+Once the firmware is on, `Boot` (top-left key on the MEDIA, NUMPAD and FUNC layers) also starts the bootloader. Connect
+the halves with the TRS/TRRS cable and plug the left half into the computer.
+[Remap's configure page](https://remap-keys.app/configure) can then edit the keymap live, as with Yushakobo's own
+firmware.
 
 ## Bluetooth: BLE Micro Pro
 
@@ -279,14 +291,36 @@ so check that a key press wakes it up again.
 
 * **In `keymap.c` (recommended):** edit, build, flash. The same file is used for both firmwares; only the left half of
   MEDIA differs between them (`#ifdef PROTOCOL_BMP`).
-* **Pro Micro:** the keymap is compiled in, exactly like on the Ergodox, so changes always mean a new firmware.
-* **BMP:** [VIA Custom UI for Vial](https://sekigon-gonnoc.github.io/via-custom-ui-for-vial/),
-  [Vial](https://vial.rocks/) and [Remap](https://remap-keys.app/) can also edit the keymap live, without flashing.
-  Those edits last until the layers in `keymap.c` change, because flashing a changed keymap replaces them. Copy changes
-  you want to keep into `keymap.c`, or define `KEYMAP_SYNC_DISABLE` in `config.h` to keep the keymap in Vial only.
+* **Live, without flashing:** [Remap](https://remap-keys.app/) works with both firmwares. On the BMP,
+  [VIA Custom UI for Vial](https://sekigon-gonnoc.github.io/via-custom-ui-for-vial/) and [Vial](https://vial.rocks/)
+  work too. Live edits last until you flash a firmware whose layers in `keymap.c` differ, which replaces them. On the Pro
+  Micro, VIA also resets them when you flash a build from a different day. Copy changes you want to keep into
+  `keymap.c`, or define `KEYMAP_SYNC_DISABLE` in `config.h` to keep the keymap in Remap/Vial only.
 
 `LAYOUT_ergo68` in `layout.h` takes its keys in the same order as the Ergo68's `LAYOUT` in mainline QMK, so keymaps can
 be copied between them.
+
+## What this builds on
+
+I looked for other Ergo68 and BLE Micro Pro work to build on. This repo uses the official pieces, and borrows from others:
+
+* **Pro Micro firmware:** Yushakobo's own keyboard definition in mainline QMK,
+  [`yushakobo/ergo68`](https://github.com/qmk/qmk_firmware/tree/master/keyboards/yushakobo/ergo68). The indicator LEDs
+  follow its default keymap. [`q4wk/qmk_firmware`](https://github.com/q4wk/qmk_firmware) (layer colours on the Ergo68)
+  is where the note about LTO breaking Remap comes from.
+* **BLE Micro Pro firmware and config:** sekigon-gonnoc's
+  [`vial-qmk` fork](https://github.com/sekigon-gonnoc/vial-qmk/tree/dev/ble-micro-pro) and the Ergo68 configs in
+  [`bmp-vial-config`](https://github.com/sekigon-gonnoc/BLE-Micro-Pro/tree/master/bmp-vial-config), which is what the
+  Web Configurator installs.
+* **Other Ergo68 keymaps** I found are personal QMK keymaps for the wired board, such as
+  [`JanaUnderground/ergo68`](https://github.com/JanaUnderground/ergo68) (Miryoku-style) and
+  [`kumbung01/my-ergo68-keymap`](https://github.com/kumbung01/my-ergo68-keymap). Neither covers Bluetooth.
+* **ZMK, an alternative for the Bluetooth setups:**
+  [`WisdomStoneWorshiper/zmk-config-Ergo68`](https://github.com/WisdomStoneWorshiper/zmk-config-Ergo68) is a ZMK
+  config for the Ergo68 on nice!nano controllers, with the same pins as QMK's definition. sekigon-gonnoc's
+  [`zmk-component-bmp-boost`](https://github.com/sekigon-gonnoc/zmk-component-bmp-boost) makes ZMK run on the BMP Boost,
+  and its battery gauge is set up for a single NiMH cell by default. ZMK would need its own keymap file and has no
+  LPME-IO support, so it would only replace the both-halves Bluetooth setup.
 
 ## Troubleshooting
 

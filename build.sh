@@ -65,12 +65,45 @@ install_keymap() {
     cp "$here"/{keymap.c,layers.h,layout.h,config.h,rules.mk,vial.json} "$dest/"
 }
 
-# qmk_make QMK_DIR ARGS...: run make in QMK_DIR. QMK_USERSPACE is unset because the QMK container
-# image points it at a folder that doesn't exist here, and mainline QMK would copy firmware there.
+# qmk_env QMK_DIR COMMAND...: run COMMAND for the QMK tree in QMK_DIR, with that tree's own
+# virtualenv first on PATH if it has one (see ensure_python_env). QMK_USERSPACE is unset because
+# the QMK container image points it at a folder that doesn't exist here, and mainline QMK would
+# copy firmware there.
+qmk_env() {
+    local dir="$1"
+    shift
+    local path="$PATH"
+    if [ -x "$dir/.venv/bin/qmk" ]; then
+        path="$dir/.venv/bin:$PATH"
+    fi
+    env -u QMK_USERSPACE PATH="$path" QMK_HOME="$dir" "$@"
+}
+
+# ensure_python_env QMK_DIR: the qmk CLI refuses to run unless every package in the tree's
+# requirements.txt can be imported. The BLE Micro Pro fork is based on an older QMK and lists
+# packages that current qmk CLI installs (including QMK's container image) no longer have. In that
+# case set up a virtualenv in QMK_DIR/.venv with the qmk CLI and the tree's requirements, rather
+# than changing the qmk CLI's own environment.
+ensure_python_env() {
+    local dir="$1"
+    if qmk_env "$dir" qmk hello >/dev/null 2>&1; then
+        return
+    fi
+    echo "The qmk CLI lacks Python packages $dir/requirements.txt needs; installing them in $dir/.venv"
+    # The interpreter the qmk CLI runs on, from its shebang line.
+    local python
+    python="$(sed -n '1s/^#!//p' "$(command -v qmk)")"
+    ${python:-python3} -m venv "$dir/.venv"
+    "$dir/.venv/bin/python" -m pip install --quiet qmk -r "$dir/requirements.txt"
+    qmk_env "$dir" qmk hello >/dev/null
+}
+
+# qmk_make QMK_DIR ARGS...: run make in QMK_DIR.
 qmk_make() {
     local dir="$1"
     shift
-    env -u QMK_USERSPACE QMK_HOME="$dir" make -C "$dir" "$@" -j"$jobs"
+    ensure_python_env "$dir"
+    qmk_env "$dir" make -C "$dir" "$@" -j"$jobs"
 }
 
 build_bmp() {
