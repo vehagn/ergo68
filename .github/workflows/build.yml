@@ -11,15 +11,15 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # The same image QMK and the BLE Micro Pro fork use for their own CI builds.
-    container: ghcr.io/qmk/qmk_cli
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build ble_micro_pro:ergo68:uf2
-        run: |
-          git config --global --add safe.directory '*'
-          ./build.sh
+      # Build inside the same devcontainer used for local development (.devcontainer/).
+      - name: Build ble_micro_pro:ergo68:uf2 in the devcontainer
+        uses: devcontainers/ci@v0.3
+        with:
+          push: never
+          runCmd: ./build.sh
 
       - uses: actions/upload-artifact@v4
         with:

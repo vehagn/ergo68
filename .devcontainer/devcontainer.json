@@ -1,0 +1,30 @@
+// Build environment for the Ergo68 BLE Micro Pro firmware.
+// Open the repo in VS Code and run "Dev Containers: Reopen in Container" (or start a GitHub Codespace),
+// then run ./build.sh or the "Build firmware" task. CI builds in this same container.
+{
+    "name": "Ergo68 BLE Micro Pro",
+    // QMK's build image: the qmk CLI, arm-none-eabi-gcc and the Python packages QMK needs.
+    "image": "ghcr.io/qmk/qmk_cli:latest",
+    "features": {
+        // A non-root user that gets your UID, so files the build writes into the repo aren't owned by root.
+        "ghcr.io/devcontainers/features/common-utils:2": {
+            "username": "vscode",
+            "installZsh": false,
+            "installOhMyZsh": false,
+            "installOhMyZshConfig": false,
+            "upgradePackages": false
+        }
+    },
+    "remoteUser": "vscode",
+    // build.sh fetches the BLE Micro Pro QMK fork into this volume. It survives container rebuilds
+    // and keeps the large QMK tree out of the bind-mounted workspace.
+    "mounts": [
+        "source=ergo68-bmp-qmk-${devcontainerId},target=/bmp-qmk,type=volume"
+    ],
+    "containerEnv": {
+        "BMP_QMK_DIR": "/bmp-qmk",
+        // The image points QMK_HOME at /qmk_firmware, which doesn't exist here.
+        "QMK_HOME": "/bmp-qmk"
+    },
+    "postCreateCommand": "sudo chown vscode: /bmp-qmk && git config --global --add safe.directory ${containerWorkspaceFolder}"
+}

@@ -124,10 +124,34 @@ Set up one half at a time. With two BMPs the halves talk to each other over Blue
 
 ## Building
 
-### Like ergodox_stonegarden
+### In the devcontainer (recommended)
 
-Set up the [QMK build environment](https://docs.qmk.fm/newbs_getting_started) (the `qmk` CLI and `arm-none-eabi-gcc`),
-then:
+The repo comes with a [devcontainer](.devcontainer/devcontainer.json) based on QMK's own build image, so you don't need
+to install QMK or an ARM toolchain on your machine. You need Docker and VS Code with the
+[Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension, or a
+GitHub Codespace.
+
+1. Open the repo in VS Code and run **Dev Containers: Reopen in Container**.
+2. Run `./build.sh` in the terminal, or **Terminal → Run Build Task** (Ctrl+Shift+B).
+3. The firmware appears as `build/ble_micro_pro_ergo68.uf2` in the repo folder on your own machine, ready to copy
+   onto the BMP. In a Codespace, right-click it in the Explorer and choose **Download**.
+
+The first build fetches the BLE Micro Pro QMK fork into a Docker volume mounted at `/bmp-qmk`, so later builds and
+container rebuilds don't have to download it again. The `qmk` CLI in the container points at that tree as well.
+Flashing and the BMP's serial console need the USB device, so do those on your own machine, not in the container.
+
+### On GitHub
+
+Every push runs [the build workflow](.github/workflows/build.yml) in the same devcontainer. Download the
+`ergo68-ble-micro-pro-firmware` artifact from the run; it is a zip file containing the `.uf2`.
+
+### Without the devcontainer
+
+With the [QMK build environment](https://docs.qmk.fm/newbs_getting_started) (the `qmk` CLI and `arm-none-eabi-gcc`)
+installed, `./build.sh` works directly on your machine. It fetches a pinned version of the fork into `.bmp-qmk/` next
+to the keymap and copies the result to `build/ble_micro_pro_ergo68.uf2`.
+
+Or do it by hand, like ergodox_stonegarden:
 
 ```bash
 git clone -b dev/ble-micro-pro https://github.com/sekigon-gonnoc/vial-qmk.git qmk_firmware_bmp
@@ -150,16 +174,6 @@ make ble_micro_pro:ergo68:uf2
 ```
 
 The firmware is written to `.build/ble_micro_pro_ergo68.uf2`.
-
-### With build.sh
-
-`./build.sh` does the same in a `.bmp-qmk/` folder next to the keymap, using a pinned version of the fork, and copies the
-result to `build/ble_micro_pro_ergo68.uf2`.
-
-### On GitHub
-
-Every push runs [the build workflow](.github/workflows/build.yml). Download the `ergo68-ble-micro-pro-firmware` artifact
-from the run; it is a zip file containing the `.uf2`.
 
 ## Flashing
 
