@@ -1,0 +1,4 @@
+# Created by build.sh
+.bmp-qmk/
+build/
+*.uf2

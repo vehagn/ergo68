@@ -1,0 +1,28 @@
+name: Build firmware
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # The same image QMK and the BLE Micro Pro fork use for their own CI builds.
+    container: ghcr.io/qmk/qmk_cli
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build ble_micro_pro:ergo68:uf2
+        run: |
+          git config --global --add safe.directory '*'
+          ./build.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ergo68-ble-micro-pro-firmware
+          path: build/*.uf2
+          if-no-files-found: error

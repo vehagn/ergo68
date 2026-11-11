@@ -1,0 +1,105 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later
+ *
+ * Ergo68 (Yushakobo) keymap for two BLE Micro Pro controllers.
+ * A port of the ergodox_stonegarden layout to the Ergo68's 68 keys.
+ */
+
+#include QMK_KEYBOARD_H
+#include "bmp_custom_keycodes.h"
+#include "layers.h"
+#include "layout.h"
+
+// Layer keys. Like ergodox_stonegarden, MEDIA/NUMPAD/FUNC latch their layer on and
+// the key in the same spot on that layer (BASE) takes you back.
+#define L_BASE  TO(_BASE)
+#define L_MEDIA TG(_MEDIA)
+#define L_NUMPD TG(_NUMPAD)
+#define L_FUNC  TG(_FUNC)
+
+#define MED_SCL LT(_MEDIA, KC_SCLN) // ; on tap, MEDIA while held
+#define CA_MENU LCA_T(KC_MENU)      // Ctrl+Alt while held (for Ctrl+Alt+Fx), Menu on tap
+#define S_INS   LSFT(KC_INS)
+
+// clang-format off
+const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
+    /* BASE (diagrams of every layer are in README.md) */
+    [_BASE] = LAYOUT_ergo68(
+        KC_BSLS, KC_1,    KC_2,    KC_3,    KC_4,    KC_5,                                KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    KC_SLSH,
+        KC_TAB,  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_ESC,           L_FUNC,  KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_QUOT,
+        KC_GRV,  KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    L_MEDIA,          L_NUMPD, KC_H,    KC_J,    KC_K,    KC_L,    MED_SCL, KC_EQL,
+        KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_LBRC,          KC_RBRC, KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_COLN, KC_MINS,
+        KC_LCTL, KC_LGUI, KC_LALT, KC_TILD, KC_DLR,  KC_BSPC, KC_DEL,           KC_ENT,  KC_SPC,  KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT, KC_RALT
+    ),
+
+    /* MEDIA: wireless control on the left, media keys on the right.
+     * Host1-5 = switch to the n-th paired host, Pair = advertise to a new host (and look for the
+     * other half), BLE/USB = where key presses go, Batt = type the battery voltage, Sleep = deep sleep.
+     */
+    [_MEDIA] = LAYOUT_ergo68(
+        QK_BOOT, ADV_ID1, ADV_ID2, ADV_ID3, ADV_ID4, ADV_ID5,                             _______, _______, _______, _______, _______, QK_BOOT,
+        EE_CLR,  AD_WO_L, SEL_BLE, SEL_USB, BATT_LV, _______, _______,          _______, KC_MPRV, KC_MUTE, _______, KC_MNXT, _______, _______,
+        _______, _______, _______, _______, _______, _______, L_BASE,           L_BASE,  KC_MRWD, KC_VOLD, KC_VOLU, KC_MFFD, _______, KC_MPLY,
+        _______, _______, _______, _______, _______, _______, _______,          _______, _______, _______, _______, _______, _______, KC_MSTP,
+        ENT_SLP, _______, _______, _______, _______, _______, _______,          _______, _______, _______, _______, _______, _______, _______
+    ),
+
+    /* NUMPAD: mouse keys on the left, numpad on the right */
+    [_NUMPAD] = LAYOUT_ergo68(
+        QK_BOOT, _______, _______, KC_BTN4, KC_BTN5, _______,                             _______, KC_NUM,  KC_PSLS, KC_PAST, KC_PMNS, QK_BOOT,
+        _______, KC_ACL0, KC_WBAK, KC_BTN1, KC_BTN2, KC_WFWD, _______,          _______, KC_LPRN, KC_P7,   KC_P8,   KC_P9,   KC_PPLS, EE_CLR,
+        _______, KC_ACL1, KC_MS_L, KC_MS_D, KC_MS_U, KC_MS_R, L_BASE,           L_BASE,  KC_RPRN, KC_P4,   KC_P5,   KC_P6,   KC_PDOT, _______,
+        _______, KC_ACL2, KC_WH_L, KC_WH_D, KC_WH_U, KC_WH_R, KC_BTN3,          _______, KC_P0,   KC_P1,   KC_P2,   KC_P3,   KC_PCMM, _______,
+        _______, _______, _______, _______, _______, _______, _______,          _______, KC_P0,   _______, _______, _______, _______, _______
+    ),
+
+    /* FUNC: F-keys and navigation. Hold the Ctrl+Alt thumb key and press an F-key for Ctrl+Alt+Fx. */
+    [_FUNC] = LAYOUT_ergo68(
+        QK_BOOT, KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,                               KC_F6,   KC_F7,   KC_F8,   KC_F9,   KC_F10,  KC_F11,
+        EE_CLR,  _______, _______, _______, _______, _______, _______,          L_BASE,  KC_INS,  KC_HOME, KC_PGUP, _______, KC_PSCR, KC_F12,
+        _______, _______, _______, _______, _______, _______, L_BASE,           L_BASE,  KC_DEL,  KC_END,  KC_PGDN, _______, _______, _______,
+        _______, _______, _______, _______, _______, S_INS,   _______,          _______, _______, _______, _______, _______, KC_RGUI, KC_RSFT,
+        _______, _______, _______, CA_MENU, _______, _______, _______,          _______, _______, _______, _______, _______, _______, KC_RCTL
+    ),
+};
+
+#if defined(ENCODER_MAP_ENABLE)
+// The Ergo68 has no encoders, but the ble_micro_pro target enables ENCODER_MAP_ENABLE
+// and QMK requires the encoder map to have as many layers as the keymap.
+const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][NUM_DIRECTIONS] = {
+    [_BASE]   = {{KC_NO, KC_NO}},
+    [_MEDIA]  = {{KC_NO, KC_NO}},
+    [_NUMPAD] = {{KC_NO, KC_NO}},
+    [_FUNC]   = {{KC_NO, KC_NO}},
+};
+#endif
+// clang-format on
+
+#ifndef KEYMAP_SYNC_DISABLE
+/*
+ * The BLE Micro Pro firmware runs the keymap stored in its (emulated) EEPROM, which
+ * is what Vial/Remap edit. keymaps[] above is only copied there when the EEPROM is
+ * reset, so flashing a new build would otherwise keep running the old keymap.
+ *
+ * To get the "edit keymap.c, build, flash, done" workflow, keep a fingerprint of
+ * keymaps[] in the user EEPROM word and reload the EEPROM keymap whenever it
+ * changes. Changes made in Vial survive a re-flash as long as the layers in this
+ * file stay the same. Define KEYMAP_SYNC_DISABLE in config.h to turn this off.
+ */
+static uint32_t keymap_fingerprint(void) {
+    const uint8_t *data = (const uint8_t *)keymaps;
+    uint32_t       hash = 2166136261u; // 32-bit FNV-1a
+    for (size_t i = 0; i < sizeof(keymaps); i++) {
+        hash ^= pgm_read_byte(data + i);
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+void keyboard_post_init_user(void) {
+    uint32_t fingerprint = keymap_fingerprint();
+    if (eeconfig_read_user() != fingerprint) {
+        dynamic_keymap_reset();
+        eeconfig_update_user(fingerprint);
+    }
+}
+#endif
