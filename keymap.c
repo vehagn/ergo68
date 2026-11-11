@@ -1,13 +1,37 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later
  *
- * Ergo68 (Yushakobo) keymap for two BLE Micro Pro controllers.
- * A port of the ergodox_stonegarden layout to the Ergo68's 68 keys.
+ * Ergo68 (Yushakobo) keymap, a port of the ergodox_stonegarden layout to the Ergo68's 68 keys.
+ *
+ * The same keymap builds for both kinds of controller:
+ *   - BLE Micro Pro (Bluetooth in one or both halves, or USB): the ble_micro_pro target of
+ *     sekigon-gonnoc/vial-qmk. PROTOCOL_BMP is defined there.
+ *   - Pro Micro (wired, TRRS cable between the halves): yushakobo/ergo68 in mainline QMK.
  */
 
 #include QMK_KEYBOARD_H
-#include "bmp_custom_keycodes.h"
 #include "layers.h"
 #include "layout.h"
+
+#ifdef PROTOCOL_BMP
+#    include "bmp_custom_keycodes.h"
+// The BLE Micro Pro fork is based on QMK 0.25, from before the mouse keycodes were renamed.
+#    define MS_UP   KC_MS_U
+#    define MS_DOWN KC_MS_D
+#    define MS_LEFT KC_MS_L
+#    define MS_RGHT KC_MS_R
+#    define MS_BTN1 KC_BTN1
+#    define MS_BTN2 KC_BTN2
+#    define MS_BTN3 KC_BTN3
+#    define MS_BTN4 KC_BTN4
+#    define MS_BTN5 KC_BTN5
+#    define MS_WHLU KC_WH_U
+#    define MS_WHLD KC_WH_D
+#    define MS_WHLL KC_WH_L
+#    define MS_WHLR KC_WH_R
+#    define MS_ACL0 KC_ACL0
+#    define MS_ACL1 KC_ACL1
+#    define MS_ACL2 KC_ACL2
+#endif
 
 // Layer keys. Like ergodox_stonegarden, MEDIA/NUMPAD/FUNC latch their layer on and
 // the key in the same spot on that layer (BASE) takes you back.
@@ -31,9 +55,11 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_LCTL, KC_LGUI, KC_LALT, KC_TILD, KC_DLR,  KC_BSPC, KC_DEL,           KC_ENT,  KC_SPC,  KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT, KC_RALT
     ),
 
-    /* MEDIA: wireless control on the left, media keys on the right.
+#ifdef PROTOCOL_BMP
+    /* MEDIA (BLE Micro Pro): wireless controls on the left, media keys on the right.
      * Host1-5 = switch to the n-th paired host, Pair = advertise to a new host (and look for the
      * other half), BLE/USB = where key presses go, Batt = type the battery voltage, Sleep = deep sleep.
+     * Keep the right half the same as in the Pro Micro version below.
      */
     [_MEDIA] = LAYOUT_ergo68(
         QK_BOOT, ADV_ID1, ADV_ID2, ADV_ID3, ADV_ID4, ADV_ID5,                             _______, _______, _______, _______, _______, QK_BOOT,
@@ -42,13 +68,25 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         _______, _______, _______, _______, _______, _______, _______,          _______, _______, _______, _______, _______, _______, KC_MSTP,
         ENT_SLP, _______, _______, _______, _______, _______, _______,          _______, _______, _______, _______, _______, _______, _______
     ),
+#else
+    /* MEDIA (Pro Micro): RGB lighting controls on the left like on the Ergodox, media keys on the right.
+     * Keep the right half the same as in the BLE Micro Pro version above.
+     */
+    [_MEDIA] = LAYOUT_ergo68(
+        QK_BOOT, RM_HUED, RM_HUEU, RM_SATD, RM_SATU, RM_PREV,                             _______, _______, _______, _______, _______, QK_BOOT,
+        EE_CLR,  _______, _______, _______, _______, _______, RM_NEXT,          _______, KC_MPRV, KC_MUTE, _______, KC_MNXT, _______, _______,
+        _______, _______, _______, _______, _______, _______, L_BASE,           L_BASE,  KC_MRWD, KC_VOLD, KC_VOLU, KC_MFFD, _______, KC_MPLY,
+        _______, _______, _______, _______, _______, _______, _______,          _______, _______, _______, _______, _______, _______, KC_MSTP,
+        RM_TOGG, RM_SPDD, RM_SPDU, RM_VALD, RM_VALU, _______, _______,          _______, _______, _______, _______, _______, _______, _______
+    ),
+#endif
 
     /* NUMPAD: mouse keys on the left, numpad on the right */
     [_NUMPAD] = LAYOUT_ergo68(
-        QK_BOOT, _______, _______, KC_BTN4, KC_BTN5, _______,                             _______, KC_NUM,  KC_PSLS, KC_PAST, KC_PMNS, QK_BOOT,
-        _______, KC_ACL0, KC_WBAK, KC_BTN1, KC_BTN2, KC_WFWD, _______,          _______, KC_LPRN, KC_P7,   KC_P8,   KC_P9,   KC_PPLS, EE_CLR,
-        _______, KC_ACL1, KC_MS_L, KC_MS_D, KC_MS_U, KC_MS_R, L_BASE,           L_BASE,  KC_RPRN, KC_P4,   KC_P5,   KC_P6,   KC_PDOT, _______,
-        _______, KC_ACL2, KC_WH_L, KC_WH_D, KC_WH_U, KC_WH_R, KC_BTN3,          _______, KC_P0,   KC_P1,   KC_P2,   KC_P3,   KC_PCMM, _______,
+        QK_BOOT, _______, _______, MS_BTN4, MS_BTN5, _______,                             _______, KC_NUM,  KC_PSLS, KC_PAST, KC_PMNS, QK_BOOT,
+        _______, MS_ACL0, KC_WBAK, MS_BTN1, MS_BTN2, KC_WFWD, _______,          _______, KC_LPRN, KC_P7,   KC_P8,   KC_P9,   KC_PPLS, EE_CLR,
+        _______, MS_ACL1, MS_LEFT, MS_DOWN, MS_UP,   MS_RGHT, L_BASE,           L_BASE,  KC_RPRN, KC_P4,   KC_P5,   KC_P6,   KC_PDOT, _______,
+        _______, MS_ACL2, MS_WHLL, MS_WHLD, MS_WHLU, MS_WHLR, MS_BTN3,          _______, KC_P0,   KC_P1,   KC_P2,   KC_P3,   KC_PCMM, _______,
         _______, _______, _______, _______, _______, _______, _______,          _______, KC_P0,   _______, _______, _______, _______, _______
     ),
 
@@ -74,17 +112,38 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][NUM_DIRECTIONS] = {
 #endif
 // clang-format on
 
-#ifndef KEYMAP_SYNC_DISABLE
+#ifdef RGB_MATRIX_ENABLE
 /*
- * The BLE Micro Pro firmware runs the keymap stored in its (emulated) EEPROM, which
- * is what Vial/Remap edit. keymaps[] above is only copied there when the EEPROM is
- * reset, so flashing a new build would otherwise keep running the old keymap.
- *
- * To get the "edit keymap.c, build, flash, done" workflow, keep a fingerprint of
- * keymaps[] in the user EEPROM word and reload the EEPROM keymap whenever it
- * changes. Changes made in Vial survive a re-flash as long as the layers in this
- * file stay the same. Define KEYMAP_SYNC_DISABLE in config.h to turn this off.
+ * Pro Micro build only (the BLE Micro Pro config leaves the LEDs off). The three LEDs at the top
+ * of each half are indicators, as in Yushakobo's default keymap: Caps/Num/Scroll Lock on the left,
+ * and on the right which of MEDIA, NUMPAD and FUNC are latched on.
  */
+bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
+    led_t host = host_keyboard_led_state();
+    RGB_MATRIX_INDICATOR_SET_COLOR(0, 0, 0, host.caps_lock ? 100 : 0);
+    RGB_MATRIX_INDICATOR_SET_COLOR(1, 0, 0, host.num_lock ? 100 : 0);
+    RGB_MATRIX_INDICATOR_SET_COLOR(2, 0, 0, host.scroll_lock ? 100 : 0);
+
+    bool media = layer_state_is(_MEDIA), numpad = layer_state_is(_NUMPAD), func = layer_state_is(_FUNC);
+    RGB_MATRIX_INDICATOR_SET_COLOR(37, media ? 70 : 0, 0, media ? 100 : 0);  // purple
+    RGB_MATRIX_INDICATOR_SET_COLOR(38, 0, numpad ? 100 : 0, 0);              // green
+    RGB_MATRIX_INDICATOR_SET_COLOR(39, func ? 100 : 0, func ? 40 : 0, 0);    // orange
+    return false;
+}
+#endif
+
+#if defined(DYNAMIC_KEYMAP_ENABLE) && !defined(KEYMAP_SYNC_DISABLE)
+/*
+ * BLE Micro Pro build: the firmware runs the keymap stored in its (emulated) EEPROM, which is
+ * what Vial/Remap edit. keymaps[] above is only copied there when the EEPROM is reset, so flashing
+ * a new build would otherwise keep running the old keymap.
+ *
+ * To get the "edit keymap.c, build, flash, done" workflow, keep a fingerprint of keymaps[] in the
+ * user EEPROM word and reload the EEPROM keymap whenever it changes. Changes made in Vial survive a
+ * re-flash as long as the layers in this file stay the same. Define KEYMAP_SYNC_DISABLE in
+ * config.h to turn this off. (The Pro Micro build has no VIA, so keymaps[] is always used there.)
+ */
+#    define SYNC_KEYMAP
 static uint32_t keymap_fingerprint(void) {
     const uint8_t *data = (const uint8_t *)keymaps;
     uint32_t       hash = 2166136261u; // 32-bit FNV-1a
@@ -95,7 +154,7 @@ static uint32_t keymap_fingerprint(void) {
     return hash;
 }
 
-void keyboard_post_init_user(void) {
+static void sync_keymap(void) {
     uint32_t fingerprint = keymap_fingerprint();
     if (eeconfig_read_user() != fingerprint) {
         dynamic_keymap_reset();
@@ -103,3 +162,20 @@ void keyboard_post_init_user(void) {
     }
 }
 #endif
+
+#if defined(PROTOCOL_BMP) && defined(BMP_AUTO_SLEEP_MINUTES)
+#    include "state_controller.h"
+#endif
+
+void keyboard_post_init_user(void) {
+#ifdef SYNC_KEYMAP
+    sync_keymap();
+#endif
+#if defined(PROTOCOL_BMP) && defined(BMP_AUTO_SLEEP_MINUTES)
+    // The Ergo68 config from the Web Configurator leaves auto-sleep off (reserved[2] = 0).
+    // Only applies on battery: the firmware never auto-sleeps while connected to USB.
+    if (get_auto_sleep_timeout() == 0) {
+        set_auto_sleep_timeout(BMP_AUTO_SLEEP_MINUTES * 60UL * 1000UL);
+    }
+#endif
+}
