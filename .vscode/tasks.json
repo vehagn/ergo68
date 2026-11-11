@@ -2,10 +2,10 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Build firmware",
-            "detail": "BLE Micro Pro (.uf2) and Pro Micro (.hex) into build/",
+            "label": "just build",
+            "detail": "BLE Micro Pro (.uf2) and Pro Micro (.hex) firmware into build/",
             "type": "shell",
-            "command": "./build.sh",
+            "command": "just build",
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -13,18 +13,18 @@
             "problemMatcher": []
         },
         {
-            "label": "Build BLE Micro Pro firmware",
+            "label": "just bmp",
             "detail": "build/ble_micro_pro_ergo68.uf2",
             "type": "shell",
-            "command": "./build.sh bmp",
+            "command": "just bmp",
             "group": "build",
             "problemMatcher": []
         },
         {
-            "label": "Build Pro Micro firmware",
+            "label": "just promicro",
             "detail": "build/yushakobo_ergo68_ergo68.hex",
             "type": "shell",
-            "command": "./build.sh promicro",
+            "command": "just promicro",
             "group": "build",
             "problemMatcher": []
         }

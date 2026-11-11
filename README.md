@@ -133,8 +133,9 @@ Lock and Scroll Lock. On the right they show which of MEDIA (purple), NUMPAD (gr
 
 ## Building
 
-`./build.sh` builds both firmwares into `build/`: `ble_micro_pro_ergo68.uf2` for BMPs and `yushakobo_ergo68_ergo68.hex`
-for Pro Micros. `./build.sh bmp` or `./build.sh promicro` builds just one. Each fetches its QMK tree at a pinned version.
+The build runs with [just](https://github.com/casey/just). `just build` builds both firmwares into `build/`:
+`ble_micro_pro_ergo68.uf2` for BMPs and `yushakobo_ergo68_ergo68.hex` for Pro Micros. `just bmp` or `just promicro`
+builds just one, and `just` on its own lists all recipes. Each build fetches its QMK tree at a pinned version.
 
 ### In the devcontainer (recommended)
 
@@ -144,12 +145,12 @@ QMK or the compilers on your machine. You need Docker and VS Code with the
 GitHub Codespace.
 
 1. Open the repo in VS Code and run **Dev Containers: Reopen in Container**.
-2. Run `./build.sh` in the terminal, or **Terminal → Run Build Task** (Ctrl+Shift+B).
+2. Run `just build` in the terminal, or **Terminal → Run Build Task** (Ctrl+Shift+B).
 3. The firmware appears in `build/` in the repo folder on your own machine. In a Codespace, right-click the file in
    the Explorer and choose **Download**.
 
 The QMK trees live in a Docker volume mounted at `/qmk`, so container rebuilds don't download them again. The BMP fork
-is based on an older QMK that wants Python packages the current QMK image lacks; `build.sh` installs those in a
+is based on an older QMK that wants Python packages the current QMK image lacks; the build installs those in a
 virtualenv inside the fork's folder the first time. Flashing needs
 the USB device, so do it on your own machine, not in the container.
 
@@ -160,8 +161,9 @@ artifact from the run; it is a zip file with both firmwares.
 
 ### Without the devcontainer
 
-With the [QMK build environment](https://docs.qmk.fm/newbs_getting_started) installed, `./build.sh` also works directly
-on your machine; it puts the QMK trees in `.qmk/`. Or do it by hand, like ergodox_stonegarden. For the Pro Micros, in
+With the [QMK build environment](https://docs.qmk.fm/newbs_getting_started) and just (`brew install just`,
+`apt install just`, …) installed, `just build` also works directly on your machine; it puts the QMK trees in `.qmk/`.
+Or do it by hand, like ergodox_stonegarden. For the Pro Micros, in
 your normal `qmk_firmware` checkout:
 
 ```bash
@@ -207,11 +209,10 @@ The easiest way to flash is [Remap](https://remap-keys.app/), the web page Yusha
    The Pro Micro only waits about 8 seconds after a reset, so be quick; Remap shows *successfully* when it's done.
 
 QMK Toolbox ([download](https://github.com/qmk/qmk_toolbox/releases): open the `.hex`, tick *Auto-Flash*, press reset)
-and `make yushakobo/ergo68:ergo68:flash` from a QMK checkout work too, as does avrdude on Linux right after a reset:
-
-```bash
-avrdude -p atmega32u4 -c avr109 -P /dev/ttyACM0 -U flash:w:yushakobo_ergo68_ergo68.hex:i
-```
+and `make yushakobo/ergo68:ergo68:flash` from a QMK checkout work too. On Linux with avrdude installed,
+`just flash-promicro` waits for you to press the reset switch and flashes `build/yushakobo_ergo68_ergo68.hex` (give the
+serial port as `just flash-promicro /dev/ttyACM1` if it isn't `/dev/ttyACM0`). Flashing needs the USB device, so run it
+on your own machine, not in the devcontainer.
 
 Once the firmware is on, `Boot` (top-left key on the MEDIA, NUMPAD and FUNC layers) also starts the bootloader. Connect
 the halves with the TRS/TRRS cable and plug the left half into the computer.

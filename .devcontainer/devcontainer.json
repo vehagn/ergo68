@@ -1,13 +1,13 @@
 // Build environment for the Ergo68 firmware (BLE Micro Pro and Pro Micro).
 // Open the repo in VS Code and run "Dev Containers: Reopen in Container" (or start a GitHub Codespace),
-// then run ./build.sh or the "Build firmware" task. CI builds in this same container.
+// then run `just build` (or Ctrl+Shift+B). CI builds in this same container.
 {
     "name": "Ergo68",
     "build": {
         "dockerfile": "Dockerfile"
     },
     "remoteUser": "vscode",
-    // build.sh fetches the QMK trees into this volume. It survives container rebuilds and keeps
+    // The justfile fetches the QMK trees into this volume. It survives container rebuilds and keeps
     // the large QMK checkouts out of the bind-mounted workspace.
     "mounts": [
         "source=ergo68-qmk-${devcontainerId},target=/qmk,type=volume"
