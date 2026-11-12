@@ -1,0 +1,26 @@
+/*
+ * SPDX-License-Identifier: MIT
+ *
+ * BMP Boost with one NiMH AAA cell per half. ZMK's voltage-divider battery driver, which the
+ * bmp_boost board uses, assumes a lithium cell (0% at 3.45 V and below), so a NiMH cell always
+ * reads 0%. Use sekigon-gonnoc's non-LiPo battery module instead (pulled in by the board): it
+ * reports a NiMH percentage and switches the half off before the cell is over-discharged.
+ *
+ * The module uses the voltage at the pin as-is, and the BMP Boost's 1:3 divider puts that at a
+ * third of the cell voltage, so bmp_boost.conf gives the module its thresholds divided by three.
+ */
+
+/ {
+    chosen {
+        zmk,battery = &nimh_battery;
+    };
+
+    nimh_battery: nimh_battery {
+        compatible = "zmk,non-lipo-battery";
+        io-channels = <&adc 4>; // the BMP Boost's BT input
+    };
+};
+
+&vbatt {
+    status = "disabled";
+};
