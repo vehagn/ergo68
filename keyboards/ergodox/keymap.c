@@ -170,22 +170,24 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  */
 typedef struct {
     const char *name;
-    uint8_t     hue, sat;
+    uint8_t     r, g, b;
 } layer_style_t;
 
+// The visualizer's colours were hue/saturation 0/0, 148/255, 80/255 and 190/255; these are the same in RGB,
+// since the Infinity's QMK build has no HSV conversion (that comes with RGB lighting, which it doesn't have).
 static const layer_style_t layer_styles[] = {
-    [_BASE]   = {"Ergodox Infinity", 0, 0}, // white
-    [_MEDIA]  = {"Media", 148, 255},
-    [_NUMPAD] = {"Mouse + Numpad", 80, 255},
-    [_FUNC]   = {"Function keys", 190, 255},
+    [_BASE]   = {"Ergodox Infinity", 255, 255, 255}, // white
+    [_MEDIA]  = {"Media", 0, 135, 255},              // blue
+    [_NUMPAD] = {"Mouse + Numpad", 32, 255, 0},      // green
+    [_FUNC]   = {"Function keys", 116, 0, 255},      // purple
 };
 
 static uint8_t lcd_layer = UINT8_MAX; // not shown yet
 
 static void lcd_show_layer_colour(uint8_t layer) {
-    rgb_t rgb = hsv_to_rgb((hsv_t){.h = layer_styles[layer].hue, .s = layer_styles[layer].sat, .v = 255});
     // Half brightness, like QMK's default for these LCDs.
-    ergodox_infinity_lcd_color(rgb.r * 128, rgb.g * 128, rgb.b * 128);
+    const layer_style_t *style = &layer_styles[layer];
+    ergodox_infinity_lcd_color(style->r * 128, style->g * 128, style->b * 128);
 }
 
 void st7565_on_user(void) {

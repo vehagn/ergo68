@@ -17,3 +17,13 @@ config ZMK_SPLIT
     default y
 
 endif
+
+# sekigon-gonnoc's bmp_boost board is made for ZMK (settings storage, the BLE Micro Pro bootloader)
+# but doesn't say so. ZMK's build workflow then fails its board check, so say it here. Zephyr reads
+# every shield's Kconfig.defconfig, so this also covers the settings_reset build.
+if BOARD_BMP_BOOST
+
+config ZMK_BOARD_COMPAT
+    default y
+
+endif

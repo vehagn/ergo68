@@ -1,31 +1,33 @@
-# Ergo68 Stonegarden
+# Ergo68
 
 Keymap for a [Yushakobo Ergo68](https://shop.yushakobo.jp/en/products/ergo68), ported from the
-[ergodox_stonegarden](https://github.com/vehagn/ergodox_stonegarden) layout. Like that repository, this is a QMK keymap
-folder that you build with `make` and flash onto the board. The same keymap builds for the kit's Pro Micros (wired) and
-for [BLE Micro Pros](https://github.com/sekigon-gonnoc/BLE-Micro-Pro) (Bluetooth).
+[ergodox_stonegarden](https://github.com/vehagn/ergodox_stonegarden) layout. It builds for the kit's Pro Micros (wired),
+for [BLE Micro Pros](https://github.com/sekigon-gonnoc/BLE-Micro-Pro) with QMK (Bluetooth), and for BMP Boosts with
+[ZMK](https://zmk.dev/) (Bluetooth). See the [top-level README](../../README.md) for the build environment.
 
 ## Hardware setups
 
-| Setup                    | Left half     | Right half                                              | Between the halves | To the computer               | Firmware                                     |
-|--------------------------|---------------|---------------------------------------------------------|--------------------|-------------------------------|----------------------------------------------|
-| Wired (the kit's chips)  | Pro Micro     | Pro Micro                                               | TRS or TRRS cable  | USB                           | `yushakobo_ergo68_ergo68.hex` on both halves |
-| Bluetooth in one half    | BLE Micro Pro | [LPME-IO](https://shop.yushakobo.jp/products/lpme-io2a) | 4-pole TRRS cable  | Bluetooth, or USB (left half) | `ble_micro_pro_ergo68.uf2` on the left half  |
-| Bluetooth in both halves | BLE Micro Pro | BLE Micro Pro                                           | Bluetooth          | Bluetooth, or USB (left half) | `ble_micro_pro_ergo68.uf2` on both halves    |
+| Setup                          | Left half     | Right half                                              | Between the halves | To the computer               | Firmware (in `build/` or the CI artifacts)                        |
+|--------------------------------|---------------|---------------------------------------------------------|--------------------|-------------------------------|-------------------------------------------------------------------|
+| Wired (the kit's chips)        | Pro Micro     | Pro Micro                                               | TRS or TRRS cable  | USB                           | `ergo68_pro_micro.hex` on both halves                             |
+| Bluetooth in one half          | BLE Micro Pro | [LPME-IO](https://shop.yushakobo.jp/products/lpme-io2a) | 4-pole TRRS cable  | Bluetooth, or USB (left half) | `ergo68_ble_micro_pro.uf2` on the left half                       |
+| Bluetooth in both halves       | BLE Micro Pro | BLE Micro Pro                                           | Bluetooth          | Bluetooth, or USB (left half) | `ergo68_ble_micro_pro.uf2` on both halves                         |
+| Bluetooth in both halves (ZMK) | BMP Boost     | BMP Boost                                               | Bluetooth          | Bluetooth, or USB (left half) | `ergo68_left-bmp_boost-zmk.uf2` and `ergo68_right-bmp_boost-zmk.uf2` |
 
 * The controllers sit in con-through sockets, so you switch setups by swapping them. Yushakobo's
   [build guide](https://github.com/yushakobo/build-documents/tree/master/Ergo68) (section EX1) shows how to fit a BLE
   Micro Pro (BMP) and the jumper an LPME-IO needs.
 * For Bluetooth in one half, the other half must have an LPME-IO. The BMP firmware only supports a cable to the other
-  half through an LPME-IO, not to a Pro Micro or a second BMP.
+  half through an LPME-IO, not to a Pro Micro or a second BMP. ZMK doesn't support the LPME-IO.
 * Never unplug the cable between the halves while the keyboard is connected to the computer. Yushakobo warns that this
   can damage it.
 * The per-key LEDs work in the wired setup, including the indicator LEDs. With a BMP they only light on USB power, and
   the BMP's Ergo68 config leaves them off.
 
-The BMP is an nRF52840 that mainline QMK doesn't support, so its firmware is built from sekigon-gonnoc's BLE Micro Pro
-fork of Vial-QMK ([`sekigon-gonnoc/vial-qmk`, branch `dev/ble-micro-pro`](https://github.com/sekigon-gonnoc/vial-qmk/tree/dev/ble-micro-pro)).
-The Pro Micro firmware is built from mainline QMK ([`yushakobo/ergo68`](https://github.com/qmk/qmk_firmware/tree/master/keyboards/yushakobo/ergo68)).
+The BMP is an nRF52840 that mainline QMK doesn't support, so its QMK firmware is built from sekigon-gonnoc's BLE Micro
+Pro fork of Vial-QMK ([`sekigon-gonnoc/vial-qmk`, branch `dev/ble-micro-pro`](https://github.com/sekigon-gonnoc/vial-qmk/tree/dev/ble-micro-pro)).
+The Pro Micro firmware is built from mainline QMK ([`yushakobo/ergo68`](https://github.com/qmk/qmk_firmware/tree/master/keyboards/yushakobo/ergo68)),
+and the ZMK firmware from [`zmk-config/`](../../zmk-config) with a keymap generated from `keymap.c`.
 
 ## Layout
 
@@ -57,7 +59,7 @@ Holding `;` gives MEDIA momentarily. Blank keys fall through to the base layer.
                                    '------'------'  '------'------'
 ```
 
-### MEDIA, BLE Micro Pro firmware (hold `;` or tap MEDIA)
+### MEDIA, BLE Micro Pro and ZMK firmware (hold `;` or tap MEDIA)
 
 `Pair` advertises to a new host and looks for the other half, `Host1`–`Host5` switch between paired hosts, `BLE`/`USB`
 choose where key presses go, `Batt` types the battery voltage, `Sleep` puts the keyboard in deep sleep.
@@ -133,93 +135,33 @@ Lock and Scroll Lock. On the right they show which of MEDIA (purple), NUMPAD (gr
 
 ## Building
 
-The build runs with [just](https://github.com/casey/just). `just build` builds both firmwares into `build/`:
-`ble_micro_pro_ergo68.uf2` for BMPs and `yushakobo_ergo68_ergo68.hex` for Pro Micros. `just bmp` or `just promicro`
-builds just one, and `just` on its own lists all recipes. Each build fetches its QMK tree at a pinned version.
-
-### In the devcontainer (recommended)
-
-The repo comes with a [devcontainer](.devcontainer/devcontainer.json) based on QMK's own build image, so you don't need
-QMK or the compilers on your machine. You need Docker and VS Code with the
-[Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension, or a
-GitHub Codespace.
-
-1. Open the repo in VS Code and run **Dev Containers: Reopen in Container**.
-2. Run `just build` in the terminal, or **Terminal → Run Build Task** (Ctrl+Shift+B).
-3. The firmware appears in `build/` in the repo folder on your own machine. In a Codespace, right-click the file in
-   the Explorer and choose **Download**.
-
-The QMK trees live in a Docker volume mounted at `/qmk`, so container rebuilds don't download them again. The BMP fork
-is based on an older QMK that wants Python packages the current QMK image lacks; the build installs those in a
-virtualenv inside the fork's folder the first time. Flashing needs
-the USB device, so do it on your own machine, not in the container.
-
-### On GitHub
-
-Every push runs [the build workflow](.github/workflows/build.yml) in the same devcontainer. Download the `ergo68-firmware`
-artifact from the run; it is a zip file with both firmwares.
-
-### Without the devcontainer
-
-With the [QMK build environment](https://docs.qmk.fm/newbs_getting_started) and just (`brew install just`,
-`apt install just`, …) installed, `just build` also works directly on your machine; it puts the QMK trees in `.qmk/`.
-Or do it by hand, like ergodox_stonegarden. For the Pro Micros, in
-your normal `qmk_firmware` checkout:
-
-```bash
-git clone https://github.com/vehagn/ergo68.git keyboards/yushakobo/ergo68/keymaps/ergo68
-```
-
-```bash
-make yushakobo/ergo68:ergo68:flash
-```
-
-For BMPs, in a checkout of the BMP fork:
-
-```bash
-git clone -b dev/ble-micro-pro https://github.com/sekigon-gonnoc/vial-qmk.git qmk_firmware_bmp
-```
-
-```bash
-cd qmk_firmware_bmp
-```
-
-```bash
-git submodule update --init lib/printf
-```
-
-```bash
-git clone https://github.com/vehagn/ergo68.git keyboards/ble_micro_pro/keymaps/ergo68
-```
-
-```bash
-make ble_micro_pro:ergo68:uf2
-```
+`just ergo68-promicro` and `just ergo68-bmp` build the two QMK firmwares; `just build` builds them along with the
+ErgoDox ones. The ZMK firmware is built by CI only (see [ZMK](#bluetooth-with-zmk-bmp-boost) below); after changing
+`keymap.c`, run `just ergo68-zmk-keymap` to update its keymap. CI fails if you forget.
 
 ## Wired: Pro Micro
 
 These are the controllers that come with the kit (ATmega32U4 Pro Micros with the Caterina bootloader). Both halves get
-the same `yushakobo_ergo68_ergo68.hex`; the PCB tells each half which side it is. Connect one half at a time with USB.
+the same `ergo68_pro_micro.hex`; the PCB tells each half which side it is. Connect one half at a time with USB.
 
 The easiest way to flash is [Remap](https://remap-keys.app/), the web page Yushakobo's build guide uses (Chrome or Edge):
 
-1. Click **Flash Firmware** on Remap's front page and drop `yushakobo_ergo68_ergo68.hex` into the dialog.
+1. Click **Flash Firmware** on Remap's front page and drop `ergo68_pro_micro.hex` into the dialog.
 2. Choose the **caterina** bootloader and click **Flash**.
 3. When it asks for the serial port, press the half's reset switch, pick the port that appears and click **Connect**.
    The Pro Micro only waits about 8 seconds after a reset, so be quick; Remap shows *successfully* when it's done.
 
 QMK Toolbox ([download](https://github.com/qmk/qmk_toolbox/releases): open the `.hex`, tick *Auto-Flash*, press reset)
-and `make yushakobo/ergo68:ergo68:flash` from a QMK checkout work too. On Linux with avrdude installed,
-`just flash-promicro` waits for you to press the reset switch and flashes `build/yushakobo_ergo68_ergo68.hex` (give the
-serial port as `just flash-promicro /dev/ttyACM1` if it isn't `/dev/ttyACM0`). Flashing needs the USB device, so run it
-on your own machine, not in the devcontainer.
+works too. On Linux with avrdude installed, `just flash-ergo68-promicro` waits for you to press the reset switch and
+flashes `build/ergo68_pro_micro.hex` (give the serial port as `just flash-ergo68-promicro /dev/ttyACM1` if it isn't
+`/dev/ttyACM0`).
 
 Once the firmware is on, `Boot` (top-left key on the MEDIA, NUMPAD and FUNC layers) also starts the bootloader. Connect
 the halves with the TRS/TRRS cable and plug the left half into the computer.
 [Remap's configure page](https://remap-keys.app/configure) can then edit the keymap live, as with Yushakobo's own
 firmware.
 
-## Bluetooth: BLE Micro Pro
+## Bluetooth: BLE Micro Pro with QMK
 
 ### One-time setup with the Web Configurator
 
@@ -243,9 +185,9 @@ screenshots of every step (in Japanese).
    * with the keyboard on USB, press `Boot` (top-left key on the MEDIA, NUMPAD and FUNC layers).
 
    The BMP shows up as a USB drive that contains `INFO_UF2.TXT`.
-2. Copy `ble_micro_pro_ergo68.uf2` onto the drive and wait for it to finish. Don't unplug it while it copies.
-3. Unplug and replug. The drive now contains `VERSION.TXT`, and its `Build from:` line shows the `ergo68-<commit>` you
-   just built.
+2. Copy `ergo68_ble_micro_pro.uf2` onto the drive and wait for it to finish. Don't unplug it while it copies.
+3. Unplug and replug. The drive now contains `VERSION.TXT`, and its `Build from:` line shows the `stonegarden-<commit>`
+   you just built.
 4. Bluetooth in both halves: do the same for the right BMP. Only the left half uses the keymap, but keeping both halves on
    the same build avoids version mismatches between them.
 
@@ -288,10 +230,44 @@ Auto-sleep is off in the Ergo68 config from the Web Configurator. To have a half
 key press while on battery, uncomment `BMP_AUTO_SLEEP_MINUTES` in `config.h`. It hasn't been tried on this keyboard yet,
 so check that a key press wakes it up again.
 
+## Bluetooth with ZMK (BMP Boost)
+
+[ZMK](https://zmk.dev/) is firmware made for wireless and split keyboards. It runs on the BMP Boost (not the original
+BLE Micro Pro) using sekigon-gonnoc's [`bmp_boost` board](https://github.com/sekigon-gonnoc/zmk-component-bmp-boost), and
+replaces the QMK firmware for the both-halves Bluetooth setup. The shield in
+[`zmk-config/boards/shields/ergo68`](../../zmk-config/boards/shields/ergo68) uses the same pins as QMK's Ergo68, and
+[`zmk-config/ergo68.keymap`](../../zmk-config/ergo68.keymap) is generated from the BMP version of `keymap.c`, so both
+firmwares have the same layers.
+
+**Getting it:** every push builds it on GitHub with ZMK's own build workflow. Download the `ergo68-zmk-firmware`
+artifact from the run. It isn't built in the devcontainer.
+
+**Flashing:** the BMP Boost's bootloader takes ZMK's `.uf2` the same way as the QMK one. Put each half in bootloader
+mode (battery off, hold the reset switch while plugging in USB, or `Boot` on the MEDIA/NUMPAD/FUNC layers) and copy
+`ergo68_left-bmp_boost-zmk.uf2` onto the left half's drive and `ergo68_right-bmp_boost-zmk.uf2` onto the right's. To
+go back to QMK, flash `ergo68_ble_micro_pro.uf2` again; if the keyboard doesn't come back up, redo the Web Configurator
+setup.
+
+**How the keys behave in ZMK:**
+
+* `Host1`–`Host5` select Bluetooth profiles 1–5. `Pair` forgets the current profile's pairing so a new device can pair
+  with it. `BLE` and `USB` choose where key presses go, as in QMK.
+* `Batt`, `Sleep` and `EEClr` do nothing: ZMK reports the battery to the computer instead, goes to sleep by itself
+  after 15 minutes without a key press (a key press wakes it), and doesn't keep the keymap in EEPROM. The mouse
+  acceleration keys do nothing either.
+* The halves pair with each other on their own. If they don't, or to forget all pairings, flash
+  `settings_reset-bmp_boost-zmk.uf2` onto both halves, then the normal firmware again.
+
+**Battery level:** ZMK reports both halves' battery to the computer, but on the BMP Boost it treats the cell as lithium
+(0% at 3.45 V and below), so a NiMH AAA cell always shows **0%**. That's only the display; the keyboard keeps working.
+sekigon-gonnoc's NiMH battery module would read it properly, but it can't be used on the BMP Boost as it is: it doesn't
+account for the board's voltage divider, so it would read a third of the real voltage and switch the keyboard off.
+
 ## Changing the keymap
 
-* **In `keymap.c` (recommended):** edit, build, flash. The same file is used for both firmwares; only the left half of
-  MEDIA differs between them (`#ifdef PROTOCOL_BMP`).
+* **In `keymap.c` (recommended):** edit, build, flash. The same file is used for every firmware; only the left half of
+  MEDIA differs between the BMP and Pro Micro builds (`#ifdef PROTOCOL_BMP`). Run `just ergo68-zmk-keymap` afterwards
+  to carry the change over to ZMK.
 * **Live, without flashing:** [Remap](https://remap-keys.app/) works with both firmwares. On the BMP,
   [VIA Custom UI for Vial](https://sekigon-gonnoc.github.io/via-custom-ui-for-vial/) and [Vial](https://vial.rocks/)
   work too. Live edits last until you flash a firmware whose layers in `keymap.c` differ, which replaces them. On the Pro
@@ -316,12 +292,11 @@ I looked for other Ergo68 and BLE Micro Pro work to build on. This repo uses the
 * **Other Ergo68 keymaps** I found are personal QMK keymaps for the wired board, such as
   [`JanaUnderground/ergo68`](https://github.com/JanaUnderground/ergo68) (Miryoku-style) and
   [`kumbung01/my-ergo68-keymap`](https://github.com/kumbung01/my-ergo68-keymap). Neither covers Bluetooth.
-* **ZMK, an alternative for the Bluetooth setups:**
-  [`WisdomStoneWorshiper/zmk-config-Ergo68`](https://github.com/WisdomStoneWorshiper/zmk-config-Ergo68) is a ZMK
-  config for the Ergo68 on nice!nano controllers, with the same pins as QMK's definition. sekigon-gonnoc's
-  [`zmk-component-bmp-boost`](https://github.com/sekigon-gonnoc/zmk-component-bmp-boost) makes ZMK run on the BMP Boost,
-  and its battery gauge is set up for a single NiMH cell by default. ZMK would need its own keymap file and has no
-  LPME-IO support, so it would only replace the both-halves Bluetooth setup.
+* **ZMK:** the shield follows
+  [`WisdomStoneWorshiper/zmk-config-Ergo68`](https://github.com/WisdomStoneWorshiper/zmk-config-Ergo68) (a ZMK config
+  for the Ergo68 on nice!nano controllers, with the same pins as QMK's definition), and the board comes from
+  sekigon-gonnoc's [`zmk-component-bmp-boost`](https://github.com/sekigon-gonnoc/zmk-component-bmp-boost) and its
+  [sample config](https://github.com/sekigon-gonnoc/zmk-bmp-boost-sample).
 
 ## Troubleshooting
 
@@ -333,6 +308,8 @@ I looked for other Ergo68 and BLE Micro Pro work to build on. This repo uses the
 * **BMP: the batteries run down much faster than expected.** The BMP Boost docs warn that LEDs powered from its VCC pin
   draw a lot of current. Compare `Batt` readings for the two halves over a day or two.
 * **Pro Micro: only one half types.** Check the TRS/TRRS cable, and that both halves have the same firmware.
+* **ZMK: the right half doesn't type.** Flash `settings_reset-bmp_boost-zmk.uf2` onto both halves, then the normal
+  firmware, and switch both halves on together so they pair again.
 
 `vial.json` is copied unchanged from the stock BMP firmware (`keyboards/ble_micro_pro/keymaps/vial`), because the fork's
 build needs it in the keymap folder.
