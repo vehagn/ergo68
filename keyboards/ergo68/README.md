@@ -21,8 +21,9 @@ for [BLE Micro Pros](https://github.com/sekigon-gonnoc/BLE-Micro-Pro) with QMK (
   half through an LPME-IO, not to a Pro Micro or a second BMP. ZMK doesn't support the LPME-IO.
 * Never unplug the cable between the halves while the keyboard is connected to the computer. Yushakobo warns that this
   can damage it.
-* The per-key LEDs work in the wired setup, including the indicator LEDs. With a BMP they only light on USB power, and
-  the BMP's Ergo68 config leaves them off.
+* The per-key LEDs work in the wired setup, including the indicator LEDs. With an original BLE Micro Pro they only
+  light on USB power (and the BMP's Ergo68 config leaves them off); with a BMP Boost they can't light at all, see
+  [The LEDs](#the-leds).
 
 The BMP is an nRF52840 that mainline QMK doesn't support, so its QMK firmware is built from sekigon-gonnoc's BLE Micro
 Pro fork of Vial-QMK ([`sekigon-gonnoc/vial-qmk`, branch `dev/ble-micro-pro`](https://github.com/sekigon-gonnoc/vial-qmk/tree/dev/ble-micro-pro)).
@@ -263,6 +264,72 @@ setup.
 sekigon-gonnoc's NiMH battery module would read it properly, but it can't be used on the BMP Boost as it is: it doesn't
 account for the board's voltage divider, so it would read a third of the real voltage and switch the keyboard off.
 
+## From an LPME-IO to two BMP Boosts
+
+This is the switch from a BMP Boost on the left with an LPME-IO on the right, to a BMP Boost in each half that talk to
+each other over Bluetooth, with the left half paired to your computer.
+
+**Hardware**
+
+1. Put the second BMP Boost in the right half, in place of the LPME-IO, the same way as on the left (13-pin
+   con-through, or the kit's 12-pin ones offset by one pin).
+2. The right half needs its own battery now. Yushakobo's guide skips the right-hand battery parts for an LPME-IO, so
+   solder the AAA holder, Schottky diodes, capacitor and slide switch onto the right bottom plate. Also fit the 2-pin
+   con-through between that plate and the PCB (section EX1-2 to EX1-4 of the
+   [build guide](https://github.com/yushakobo/build-documents/tree/master/Ergo68)). The AAA battery kit has parts for
+   both halves.
+3. Keep the TRRS cable, but leave it unplugged in normal use (see [Running out of battery](#running-out-of-battery)).
+
+**Firmware.** Pick one; both have the same keymap.
+
+* **QMK (BLE Micro Pro firmware):** in the Web Configurator, select **ergo68** *without* *Use with LPME-IO*. Rewrite the
+  left half's config with *Is Slave* unchecked and *Is Left* checked; it's currently set up for the LPME-IO. Then set
+  up the right BMP Boost (bootloader, firmware, config with *Is Slave* checked and *Is Left* unchecked). Finally flash
+  `ergo68_ble_micro_pro.uf2` onto both halves ([Flashing this firmware](#flashing-this-firmware)).
+* **ZMK:** flash `ergo68_left-bmp_boost-zmk.uf2` onto the left half and `ergo68_right-bmp_boost-zmk.uf2` onto the right
+  ([Bluetooth with ZMK](#bluetooth-with-zmk-bmp-boost)). It doesn't use the Web Configurator's config.
+
+**Pairing**
+
+1. *The halves with each other.* With QMK, switch on the left half, then the right half within a few seconds. If they
+   don't find each other, press `Pair` (hold `;` + Q) with both switched on. With ZMK they pair by themselves the first
+   time both are on. If not, flash `settings_reset-bmp_boost-zmk.uf2` onto both and then the normal firmware again.
+2. *The computer.* Pair it with the left half: it appears as *ergo68* in the computer's Bluetooth settings, right after
+   switching on or after `Pair` (QMK). `Host1`–`Host5` (hold `;` + 1–5) switch between paired computers.
+
+### Running out of battery
+
+Plug the **left** half into the computer with USB. It runs from USB and sends key presses over it. QMK switches to USB
+by itself unless a Bluetooth host is connected (then press `USB`, hold `;` + E); ZMK prefers USB whenever it's
+plugged in.
+
+The halves keep talking over Bluetooth, so the right half only needs power, not a data connection. That's where the TRRS
+cable may help: today it carries the left BMP Boost's supply to your LPME-IO. Whether a BMP Boost on the right will run
+from that same supply I couldn't confirm. On the BMP Boost that pin is its own roughly 2.4 V output, and its documentation
+doesn't say whether it can also be powered through it. To try it safely:
+
+1. Unplug USB and switch **both** halves' batteries off.
+2. Connect the TRRS cable. Only plug or unplug it with everything switched off and USB disconnected; Yushakobo warns
+   that doing it live can damage the keyboard.
+3. Plug the left half into the computer and type on the right half.
+
+If the right half types, that's your fallback; leave the right battery switched off while it's powered over the cable.
+If it doesn't, the dependable fallback is a USB charger or power bank on the right half (or swapping in fresh cells).
+
+### The LEDs
+
+Unfortunately the LEDs can't be made to work with a BMP Boost, whatever the firmware does. The Ergo68 powers them from
+the controller's VCC pin. Yushakobo notes that with a BLE Micro Pro they only light on USB, and the original BLE Micro
+Pro deliberately puts about 4.3 V from USB on that pin for this kind of LED. On a BMP Boost that pin is its roughly 2.4 V
+supply, on battery and on USB alike. That's below what these addressable LEDs need (typically 3.5 V or more).
+
+They also cost battery even when dark. sekigon-gonnoc's BMP Boost notes warn that LEDs on its VCC output increase power
+use considerably, and suggest pulling that pin out of the con-through if the LEDs are already fitted. Doing that also
+disconnects the TRRS supply above, so it's a choice between the two. If your left cell already runs down much faster
+than expected, this is the likely reason.
+
+The LEDs do work with the kit's Pro Micros (wired), including the indicator LEDs.
+
 ## Changing the keymap
 
 * **In `keymap.c` (recommended):** edit, build, flash. The same file is used for every firmware; only the left half of
@@ -306,7 +373,7 @@ I looked for other Ergo68 and BLE Micro Pro work to build on. This repo uses the
 * **BMP: it doesn't show up as a drive in bootloader mode.** The battery was probably still on, so the BMP never
   restarted. Switch it off and try again.
 * **BMP: the batteries run down much faster than expected.** The BMP Boost docs warn that LEDs powered from its VCC pin
-  draw a lot of current. Compare `Batt` readings for the two halves over a day or two.
+  draw a lot of current; see [The LEDs](#the-leds). Compare `Batt` readings for the two halves over a day or two.
 * **Pro Micro: only one half types.** Check the TRS/TRRS cable, and that both halves have the same firmware.
 * **ZMK: the right half doesn't type.** Flash `settings_reset-bmp_boost-zmk.uf2` onto both halves, then the normal
   firmware, and switch both halves on together so they pair again.
