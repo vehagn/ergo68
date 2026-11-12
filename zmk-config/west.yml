@@ -1,0 +1,23 @@
+manifest:
+  remotes:
+    - name: zmkfirmware
+      url-base: https://github.com/zmkfirmware
+    - name: sekigon-gonnoc
+      url-base: https://github.com/sekigon-gonnoc
+  projects:
+    # ZMK main, pinned. Keep the build workflow in .github/workflows/build.yml at the same commit.
+    - name: zmk
+      remote: zmkfirmware
+      revision: 4dd95d7840eb3d5a3f59bb29fbf1ab054715ef85
+      import: app/west.yml
+    # The bmp_boost board.
+    - name: zmk-component-bmp-boost
+      remote: sekigon-gonnoc
+      revision: 2f5567523b6f0bc39575d48ed746ed9d635edf8b
+      import: west.yml
+    # Pulled in by zmk-component-bmp-boost on its main branch; pinned here instead.
+    - name: zmk-feature-non-lipo-battery-management
+      remote: sekigon-gonnoc
+      revision: 43fa56fb7d1e065393e926b6caa0ea02cb86eca7
+  self:
+    path: zmk-config

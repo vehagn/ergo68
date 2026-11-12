@@ -1,0 +1,9 @@
+# ZMK firmware for the Ergo68 on two BMP Boosts (Bluetooth in both halves), built by
+# .github/workflows/build.yml with ZMK's own build workflow. settings_reset clears the pairings.
+include:
+  - board: bmp_boost
+    shield: ergo68_left
+  - board: bmp_boost
+    shield: ergo68_right
+  - board: bmp_boost
+    shield: settings_reset

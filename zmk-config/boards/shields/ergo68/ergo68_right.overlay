@@ -1,0 +1,8 @@
+/* SPDX-License-Identifier: MIT */
+
+#include "ergo68.dtsi"
+
+// The right half's columns are 7-13 in the matrix transform.
+&default_transform {
+    col-offset = <7>;
+};

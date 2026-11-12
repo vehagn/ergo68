@@ -9,22 +9,33 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  qmk:
+    name: QMK firmware
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       # Build inside the same devcontainer used for local development (.devcontainer/).
-      - name: Build BLE Micro Pro and Pro Micro firmware in the devcontainer
+      - name: Build the QMK firmwares in the devcontainer
         uses: devcontainers/ci@v0.3
         with:
           push: never
-          runCmd: just build
+          runCmd: just check-zmk-keymap build
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ergo68-firmware
+          name: stonegarden-qmk-firmware
           path: |
             build/*.uf2
             build/*.hex
+            build/*.bin
           if-no-files-found: error
+
+  zmk:
+    name: ZMK firmware (Ergo68, BMP Boost)
+    # Keep this at the same commit as zmk in zmk-config/west.yml.
+    uses: zmkfirmware/zmk/.github/workflows/build-user-config.yml@4dd95d7840eb3d5a3f59bb29fbf1ab054715ef85
+    with:
+      config_path: zmk-config
+      build_matrix_path: zmk-config/build.yaml
+      archive_name: ergo68-zmk-firmware

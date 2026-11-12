@@ -1,0 +1,11 @@
+file_format: "1"
+id: ergo68
+name: Ergo68
+type: shield
+url: https://shop.yushakobo.jp/en/products/ergo68
+requires: [pro_micro]
+features:
+  - keys
+siblings:
+  - ergo68_left
+  - ergo68_right

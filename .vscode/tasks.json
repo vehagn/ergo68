@@ -3,7 +3,7 @@
     "tasks": [
         {
             "label": "just build",
-            "detail": "BLE Micro Pro (.uf2) and Pro Micro (.hex) firmware into build/",
+            "detail": "Every QMK firmware into build/",
             "type": "shell",
             "command": "just build",
             "group": {
@@ -13,19 +13,42 @@
             "problemMatcher": []
         },
         {
-            "label": "just bmp",
-            "detail": "build/ble_micro_pro_ergo68.uf2",
+            "label": "just ergo68-bmp",
+            "detail": "build/ergo68_ble_micro_pro.uf2",
             "type": "shell",
-            "command": "just bmp",
+            "command": "just ergo68-bmp",
             "group": "build",
             "problemMatcher": []
         },
         {
-            "label": "just promicro",
-            "detail": "build/yushakobo_ergo68_ergo68.hex",
+            "label": "just ergo68-promicro",
+            "detail": "build/ergo68_pro_micro.hex",
             "type": "shell",
-            "command": "just promicro",
+            "command": "just ergo68-promicro",
             "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "just ergodox-infinity",
+            "detail": "build/ergodox_infinity.bin",
+            "type": "shell",
+            "command": "just ergodox-infinity",
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "just ergodox-ez",
+            "detail": "build/ergodox_ez_base.hex",
+            "type": "shell",
+            "command": "just ergodox-ez",
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "just ergo68-zmk-keymap",
+            "detail": "Regenerate zmk-config/ergo68.keymap from keyboards/ergo68/keymap.c",
+            "type": "shell",
+            "command": "just ergo68-zmk-keymap",
             "problemMatcher": []
         }
     ]

@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: MIT
+
+config SHIELD_ERGO68_LEFT
+    def_bool $(shields_list_contains,ergo68_left)
+
+config SHIELD_ERGO68_RIGHT
+    def_bool $(shields_list_contains,ergo68_right)
