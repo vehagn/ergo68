@@ -254,15 +254,30 @@ setup.
 * `Host1`–`Host5` select Bluetooth profiles 1–5. `Pair` forgets the current profile's pairing so a new device can pair
   with it. `BLE` and `USB` choose where key presses go, as in QMK.
 * `Batt`, `Sleep` and `EEClr` do nothing: ZMK reports the battery to the computer instead, goes to sleep by itself
-  after 15 minutes without a key press (a key press wakes it), and doesn't keep the keymap in EEPROM. The mouse
-  acceleration keys do nothing either.
+  (see below), and doesn't keep the keymap in EEPROM. The mouse acceleration keys do nothing either.
 * The halves pair with each other on their own. If they don't, or to forget all pairings, flash
   `settings_reset-bmp_boost-zmk.uf2` onto both halves, then the normal firmware again.
 
-**Battery level:** ZMK reports both halves' battery to the computer, but on the BMP Boost it treats the cell as lithium
-(0% at 3.45 V and below), so a NiMH AAA cell always shows **0%**. That's only the display; the keyboard keeps working.
-sekigon-gonnoc's NiMH battery module would read it properly, but it can't be used on the BMP Boost as it is: it doesn't
-account for the board's voltage divider, so it would read a third of the real voltage and switch the keyboard off.
+**Battery (AAA NiMH):** ZMK reports both halves' battery level to the computer. Out of the box it would treat the BMP
+Boost's cell as lithium and always show 0%, so this config uses sekigon-gonnoc's
+[NiMH battery module](https://github.com/sekigon-gonnoc/zmk-feature-non-lipo-battery-management) instead
+([`boards/bmp_boost.overlay`](../../zmk-config/boards/shields/ergo68/boards/bmp_boost.overlay) and
+[`.conf`](../../zmk-config/boards/shields/ergo68/boards/bmp_boost.conf) in the shield):
+
+| Cell voltage | Reported                                                    |
+|--------------|-------------------------------------------------------------|
+| 1.30 V+      | 100%                                                        |
+| 1.20 V       | 50% (where a NiMH cell spends most of its life)             |
+| 1.10 V       | 0%: time to charge                                          |
+| 1.05 V       | The half switches itself off to protect the cell, unless it's on USB |
+
+The module measures the voltage at the BMP Boost's battery pin, which the board's 1:3 voltage divider puts at a third of
+the cell's, so the thresholds in the config are a third of the numbers above. I couldn't check the divider on real
+hardware, so compare the reported level against a multimeter once. If it reads far too high, the divider isn't there
+and the thresholds need multiplying by three.
+
+**Sleep:** a half goes to sleep after 15 minutes without a key press, or after a minute of looking for a connection it
+doesn't get (the computer or the other half is off). A key press wakes it.
 
 ## From an LPME-IO to two BMP Boosts
 
@@ -280,7 +295,9 @@ each other over Bluetooth, with the left half paired to your computer.
    both halves.
 3. Keep the TRRS cable, but leave it unplugged in normal use (see [Running out of battery](#running-out-of-battery)).
 
-**Firmware.** Pick one; both have the same keymap.
+**Firmware.** Either works and both have the same keymap. ZMK is the better fit for two BMP Boosts on NiMH cells: it
+reads the battery properly, sleeps and wakes by itself and was made for Bluetooth splits. QMK has live editing in
+Vial/Remap and works with the LPME-IO.
 
 * **QMK (BLE Micro Pro firmware):** in the Web Configurator, select **ergo68** *without* *Use with LPME-IO*. Rewrite the
   left half's config with *Is Slave* unchecked and *Is Left* checked; it's currently set up for the LPME-IO. Then set
@@ -315,6 +332,11 @@ doesn't say whether it can also be powered through it. To try it safely:
 
 If the right half types, that's your fallback; leave the right battery switched off while it's powered over the cable.
 If it doesn't, the dependable fallback is a USB charger or power bank on the right half (or swapping in fresh cells).
+
+With ZMK this only works if you give up the low-battery protection on the right half. Powered over the cable, the
+right half isn't on USB and reads an empty or switched-off cell, so it switches itself off at once. To try it anyway,
+set `CONFIG_ZMK_NON_LIPO_LOW_MV=0` in the shield's `bmp_boost.conf`; that also stops it protecting the cells. A USB
+charger on the right half works with ZMK as it is.
 
 ### The LEDs
 
