@@ -234,9 +234,10 @@ NiMH cells work fine. Things to know:
   100 µA for the other half.
 * **Switch off with the slide switch** when you're not using the keyboard, or press `Sleep` (hold `;` + left Ctrl).
 
-Auto-sleep is off in the Ergo68 config from the Web Configurator. To have a half go to sleep after some time without a
-key press while on battery, uncomment `BMP_AUTO_SLEEP_MINUTES` in `config.h`. It hasn't been tried on this keyboard yet,
-so check that a key press wakes it up again.
+Auto-sleep is off in the Ergo68 config from the Web Configurator, so this firmware turns it on: on battery, a half goes
+to sleep after 30 minutes without a key press (`BMP_AUTO_SLEEP_MINUTES` in `config.h`; comment it out to turn it off).
+It never sleeps on USB. It hasn't been tried on this keyboard yet, so check that a key press wakes it up again. Whether
+the BMP Boost also cuts the LEDs' supply while asleep is unknown (see [The LEDs](#the-leds)).
 
 ## Bluetooth with ZMK (BMP Boost)
 

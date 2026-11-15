@@ -16,7 +16,7 @@
 // layers in keymap.c change (e.g. if you mostly edit the keymap in Vial or Remap).
 // #define KEYMAP_SYNC_DISABLE
 
-// BLE Micro Pro: uncomment to put a half to sleep after this many minutes without a key press on
-// it while on battery, to save the cells. The Ergo68 config from the Web Configurator leaves
-// auto-sleep off. Not tried on this keyboard yet: check that a key press wakes it up again.
-// #define BMP_AUTO_SLEEP_MINUTES 30
+// BLE Micro Pro: put a half to sleep after this many minutes without a key press on it while on
+// battery, to save the cells (the Ergo68 config from the Web Configurator leaves auto-sleep off).
+// Comment out to turn it off. Not tried on this keyboard yet: check that a key press wakes it up.
+#define BMP_AUTO_SLEEP_MINUTES 30
