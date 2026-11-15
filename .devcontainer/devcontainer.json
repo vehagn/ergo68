@@ -4,7 +4,7 @@
 {
     "name": "Ergo68",
     "build": {
-        "dockerfile": "Dockerfile"
+        "dockerfile": "Containerfile"
     },
     "remoteUser": "vscode",
     // The justfile fetches the QMK trees into this volume. It survives container rebuilds and keeps
