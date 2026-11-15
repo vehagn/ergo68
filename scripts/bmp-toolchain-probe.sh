@@ -29,18 +29,28 @@ for name in "${!toolchains[@]}"; do
     if [ ! -x "$dir/bin/arm-none-eabi-gcc" ]; then
         echo "Downloading $name"
         mkdir -p "$dir"
-        curl -sSfL "${toolchains[$name]}" | tar -xa -C "$dir" --strip-components=1 -f -
+        url="${toolchains[$name]}"
+        case "$url" in *.bz2) z=-j ;; *) z=-J ;; esac
+        curl -sSfL "$url" | tar -x "$z" -C "$dir" --strip-components=1 -f -
     fi
     prefix="$dir/bin/arm-none-eabi-"
     "${prefix}gcc" --version | head -1
 
+    # One toolchain failing to build shouldn't hide the others' results.
     rm -rf "$bmp140_dir/.build"
-    just _make "$bmp140_dir" ble_micro_pro:vial:uf2 "TOOLCHAIN=$prefix"
-    "${prefix}objcopy" -O binary "$bmp140_dir/.build/ble_micro_pro_vial.elf" "$out/stock_1_4_0_$name.bin"
+    if just _make "$bmp140_dir" ble_micro_pro:vial:uf2 "TOOLCHAIN=$prefix"; then
+        "${prefix}objcopy" -O binary "$bmp140_dir/.build/ble_micro_pro_vial.elf" "$out/stock_1_4_0_$name.bin"
+        cp "$bmp140_dir/.build/ble_micro_pro_vial.uf2" "$out/stock_1_4_0_$name.uf2" || true
+    else
+        echo "::warning::stock 1.4.0 failed to build with $name"
+    fi
 
     rm -rf "$bmp_dir/.build"
-    just _make "$bmp_dir" ble_micro_pro:stonegarden:uf2 "TOOLCHAIN=$prefix"
-    cp "$bmp_dir/.build/ble_micro_pro_stonegarden.uf2" "$out/ergo68_ble_micro_pro_$name.uf2"
+    if just _make "$bmp_dir" ble_micro_pro:stonegarden:uf2 "TOOLCHAIN=$prefix"; then
+        cp "$bmp_dir/.build/ble_micro_pro_stonegarden.uf2" "$out/ergo68_ble_micro_pro_$name.uf2"
+    else
+        echo "::warning::stonegarden failed to build with $name"
+    fi
 done
 
 python3 -I - "$out" <<'PY'
