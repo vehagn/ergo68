@@ -24,9 +24,6 @@ bmp_repo := env_var_or_default("BMP_QMK_REPO", "https://github.com/sekigon-gonno
 # match the bootloader installed by the BLE Micro Pro Web Configurator.
 bmp_ref := env_var_or_default("BMP_QMK_REF", "4de02c1aeec5a34f0744a97213499441c508d565")
 bmp_dir := env_var_or_default("BMP_QMK_DIR", root / ".qmk/bmp")
-# Release bmp-vial-1.4.0, the version the Web Configurator installs (used by bmp-diagnostics).
-bmp140_ref := "be3adb0a11ab751d2cdf35ba26f5b9011d937ec2"
-bmp140_dir := bmp_dir + "-1.4.0"
 
 mainline_repo := env_var_or_default("MAINLINE_QMK_REPO", "https://github.com/qmk/qmk_firmware.git")
 # Release 0.34.7
@@ -55,23 +52,10 @@ default:
 build: ergo68-bmp ergo68-promicro ergodox-infinity ergodox-ez
 
 # Ergo68 with BLE Micro Pros: build/ergo68_ble_micro_pro.uf2
-ergo68-bmp: (_fetch bmp_dir bmp_repo bmp_ref "lib/printf") (_install-keymap bmp_dir "ble_micro_pro" "ergo68") (_make bmp_dir ergo68_bmp_target)
+ergo68-bmp: _check-bmp-gcc (_fetch bmp_dir bmp_repo bmp_ref "lib/printf") (_install-keymap bmp_dir "ble_micro_pro" "ergo68") (_make bmp_dir ergo68_bmp_target)
     @mkdir -p {{ quote(build_dir) }}
     @cp {{ quote(bmp_dir / ".build" / "ble_micro_pro_" + keymap + ".uf2") }} {{ quote(ergo68_uf2) }}
     @echo "Built {{ ergo68_uf2 }}"
-
-# Diagnostic BLE Micro Pro builds, to find out why a build doesn't start: the fork's stock Vial
-# firmware and this keymap, at the pinned commit and at release 1.4.0 (build/bmp-diagnostics/)
-bmp-diagnostics: (_fetch bmp_dir bmp_repo bmp_ref "lib/printf") (_make bmp_dir "ble_micro_pro:vial:uf2") (_fetch bmp140_dir bmp_repo bmp140_ref "lib/printf") (_make bmp140_dir "ble_micro_pro:vial:uf2") (_install-keymap bmp140_dir "ble_micro_pro" "ergo68") (_make bmp140_dir ergo68_bmp_target)
-    #!/usr/bin/env bash
-    set -euo pipefail
-    out={{ quote(build_dir / "bmp-diagnostics") }}
-    mkdir -p "$out"
-    cp {{ quote(bmp_dir / ".build/ble_micro_pro_vial.uf2") }} "$out/stock_vial_pinned.uf2"
-    cp {{ quote(bmp140_dir / ".build/ble_micro_pro_vial.uf2") }} "$out/stock_vial_1_4_0.uf2"
-    cp {{ quote(bmp140_dir / ".build/ble_micro_pro_vial.hex") }} "$out/stock_vial_1_4_0.hex" 2>/dev/null || cp {{ quote(bmp140_dir / ".build/ble_micro_pro_vial.elf") }} "$out/stock_vial_1_4_0.elf"
-    cp {{ quote(bmp140_dir / ".build" / "ble_micro_pro_" + keymap + ".uf2") }} "$out/stonegarden_1_4_0.uf2"
-    ls -la "$out"
 
 # Ergo68 with Pro Micros (the kit's controllers): build/ergo68_pro_micro.hex
 ergo68-promicro: (_fetch mainline_dir mainline_repo mainline_ref "lib/lufa" "lib/printf") (_install-keymap mainline_dir "yushakobo/ergo68" "ergo68") (_make mainline_dir ergo68_promicro_target)
@@ -159,6 +143,18 @@ _install-keymap dir keyboard source:
     @mkdir -p "$1/keyboards/$2/keymaps/{{ keymap }}"
     @cp -R {{ quote(root / "keyboards") }}/"$3"/. "$1/keyboards/$2/keymaps/{{ keymap }}/"
 
+# The BLE Micro Pro firmware only starts when built with Ubuntu 24.04's arm-none-eabi-gcc 13.2.1 (as
+# in the devcontainer), the compiler the official releases are built with. Other versions build
+# firmware the bootloader accepts but that never starts.
+_check-bmp-gcc:
+    #!/usr/bin/env bash
+    version="$(arm-none-eabi-gcc --version 2>/dev/null | head -1)"
+    case "$version" in
+        *"13.2.rel1-2"*) ;;
+        *) echo "warning: BLE Micro Pro firmware built with '${version:-no arm-none-eabi-gcc}' may not start;" \
+               "build it in the devcontainer (Ubuntu 24.04's arm-none-eabi-gcc 13.2.1)" >&2 ;;
+    esac
+
 # Run make in the QMK tree in DIR
 _make dir *args:
     #!/usr/bin/env bash
@@ -167,8 +163,7 @@ _make dir *args:
     shift
 
     # Run a command for this tree, with its own virtualenv (if any) first on PATH. QMK_USERSPACE is
-    # unset because the QMK container image points it at a folder that doesn't exist, and mainline
-    # QMK would copy firmware there.
+    # unset so that mainline QMK doesn't copy firmware into a userspace someone has configured.
     qmk_env() {
         local path="$PATH"
         if [ -x "$dir/.venv/bin/qmk" ]; then

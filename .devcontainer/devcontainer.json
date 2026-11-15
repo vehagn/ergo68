@@ -15,7 +15,7 @@
     "containerEnv": {
         "BMP_QMK_DIR": "/qmk/bmp",
         "MAINLINE_QMK_DIR": "/qmk/mainline",
-        // The image points QMK_HOME at /qmk_firmware, which doesn't exist here.
+        // QMK_HOME for running the qmk CLI by hand; the justfile sets it per tree.
         "QMK_HOME": "/qmk/mainline"
     },
     "postCreateCommand": "sudo chown vscode: /qmk && git config --global --add safe.directory ${containerWorkspaceFolder}"

@@ -18,8 +18,11 @@ tree at a pinned version, copies the keymap from `keyboards/` into it as `stoneg
 
 ### In the devcontainer (recommended)
 
-The [devcontainer](.devcontainer/devcontainer.json) is based on QMK's own build image and has just installed, so you
-don't need QMK or the compilers on your machine. You need Docker and VS Code with the
+The [devcontainer](.devcontainer/devcontainer.json) is Ubuntu 24.04 with the qmk CLI, the compilers and just installed,
+so you don't need QMK or the compilers on your machine. It's Ubuntu 24.04 rather than QMK's own build image because the
+BLE Micro Pro firmware only starts when it's built with Ubuntu 24.04's `arm-none-eabi-gcc` (13.2.1), the compiler
+sekigon builds the official releases with. Built with any other version we tried, the bootloader takes the file but the
+firmware never starts. You need Docker and VS Code with the
 [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension, or a
 GitHub Codespace.
 
@@ -30,7 +33,7 @@ GitHub Codespace.
    Explorer and choose **Download**.
 
 The QMK trees live in a Docker volume mounted at `/qmk`, so container rebuilds don't download them again. The BLE Micro
-Pro fork is based on an older QMK that wants Python packages the current QMK image lacks; the build installs those in a
+Pro fork is based on an older QMK that wants Python packages the current qmk CLI lacks; the build installs those in a
 virtualenv inside the fork's folder the first time. Flashing needs the USB device, so run the `flash-*` recipes (or
 Remap, QMK Toolbox, …) on your own machine, not in the container.
 
@@ -43,7 +46,8 @@ Every push runs [the build workflow](.github/workflows/build.yml). It builds the
 ### Without the devcontainer
 
 With the [QMK build environment](https://docs.qmk.fm/newbs_getting_started) and just (`brew install just`,
-`apt install just`, …) installed, the recipes also work directly on your machine; they put the QMK trees in `.qmk/`.
+`apt install just`, …) installed, the recipes also work directly on your machine; they put the QMK trees in `.qmk/`. `just ergo68-bmp` warns
+when your `arm-none-eabi-gcc` isn't Ubuntu 24.04's 13.2.1, as that firmware may then not start.
 
 Or do it by hand, like ergodox_stonegarden: link a keymap folder into a QMK checkout and run `make`. For example, for
 the ErgoDox in your normal `qmk_firmware` checkout, with this repo cloned to `~/stonegarden`:
