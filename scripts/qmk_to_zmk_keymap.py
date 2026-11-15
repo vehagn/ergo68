@@ -32,7 +32,7 @@ KEYS = {
     "KC_LEFT": "LEFT", "KC_DOWN": "DOWN", "KC_UP": "UP", "KC_RGHT": "RIGHT", "KC_INS": "INS",
     "KC_HOME": "HOME", "KC_END": "END", "KC_PGUP": "PG_UP", "KC_PGDN": "PG_DN", "KC_PSCR": "PSCRN",
     "KC_NUM": "KP_NUM", "KC_PSLS": "KP_SLASH", "KC_PAST": "KP_MULTIPLY", "KC_PMNS": "KP_MINUS",
-    "KC_PPLS": "KP_PLUS", "KC_PDOT": "KP_DOT", "KC_PCMM": "KP_COMMA",
+    "KC_PPLS": "KP_PLUS", "KC_PDOT": "KP_DOT", "KC_PCMM": "KP_COMMA", "KC_PEQL": "KP_EQUAL",
     "KC_MPRV": "C_PREV", "KC_MNXT": "C_NEXT", "KC_MUTE": "C_MUTE", "KC_VOLD": "C_VOL_DN",
     "KC_VOLU": "C_VOL_UP", "KC_MRWD": "C_RW", "KC_MFFD": "C_FF", "KC_MPLY": "C_PP", "KC_MSTP": "C_STOP",
     "KC_WBAK": "C_AC_BACK", "KC_WFWD": "C_AC_FORWARD",
@@ -41,7 +41,7 @@ KEYS = {
 # QMK keycode -> complete ZMK binding.
 BINDINGS = {
     "_______": "&trans", "KC_TRNS": "&trans", "XXXXXXX": "&none", "KC_NO": "&none",
-    "QK_BOOT": "&bootloader",
+    "QK_BOOT": "&bootloader", "QK_RBT": "&sys_reset",
     "EE_CLR": "&none",  # ZMK keeps no EEPROM keymap; flash settings_reset to clear its settings
     "MS_BTN1": "&mkp LCLK", "MS_BTN2": "&mkp RCLK", "MS_BTN3": "&mkp MCLK", "MS_BTN4": "&mkp MB4",
     "MS_BTN5": "&mkp MB5",

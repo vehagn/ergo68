@@ -2,7 +2,7 @@
 
 enum custom_layers {
     _BASE,
-    _MEDIA,
-    _NUMPAD,
+    _NAV,
     _FUNC,
+    _NUMPAD,
 };

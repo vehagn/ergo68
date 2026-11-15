@@ -32,16 +32,13 @@ and the ZMK firmware from [`zmk-config/`](../../zmk-config) with a keymap genera
 
 ## Layout
 
-The Ergo68 has eight keys fewer than the Ergodox, so:
+Four layers, ported from a Vial layout:
 
-* Home/End, PgUp/PgDn, Ins and PrtSc moved from the thumb clusters to a navigation block on the FUNC layer.
-* Ctrl+Alt/Menu moved to the left thumb on the FUNC layer. Hold it and press an F-key for Ctrl+Alt+Fx (TTY switching).
-* The right-hand Esc became the FUNC key (Esc is still on the left).
-* The left half of MEDIA has Bluetooth controls in the BMP firmware and the Ergodox's RGB controls in the Pro Micro
-  firmware. The NKRO toggle is gone.
-
-`MEDIA`, `NUMPD` and `FUNC` latch their layer on, and `BASE` (the key in the same spot) returns to the base layer.
-Holding `;` gives MEDIA momentarily. Blank keys fall through to the base layer.
+* `NAV` is held: either `NAV` thumb key, or the 1u thumb key next to Space on the right.
+* `FUNC` and `NUMPD` latch their layer on. `BASE`, the inner key in the same spot on every other layer, returns to the base
+  layer. Holding `;` gives FUNC momentarily.
+* Blank keys fall through to the base layer, and `·` keys do nothing.
+* The left half of FUNC has Bluetooth controls in the BMP and ZMK firmware, and RGB controls in the Pro Micro firmware.
 
 ### BASE
 
@@ -49,90 +46,95 @@ Holding `;` gives MEDIA momentarily. Blank keys fall through to the base layer.
 .------.------.------.------.------.------.                .------.------.------.------.------.------.
 |  \   |  1   |  2   |  3   |  4   |  5   |                |  6   |  7   |  8   |  9   |  0   |  /   |
 |------+------+------+------+------+------+------.  .------+------+------+------+------+------+------|
-| Tab  |  Q   |  W   |  E   |  R   |  T   | Esc  |  | FUNC |  Y   |  U   |  I   |  O   |  P   |  '   |
+| Tab  |  Q   |  W   |  E   |  R   |  T   | Esc  |  | Esc  |  Y   |  U   |  I   |  O   |  P   |  '   |
 |------+------+------+------+------+------+------|  |------+------+------+------+------+------+------|
-|  `   |  A   |  S   |  D   |  F   |  G   |MEDIA |  |NUMPD |  H   |  J   |  K   |  L   |;/MED |  =   |
+|  `   |  A   |  S   |  D   |  F   |  G   | FUNC |  |NUMPD |  H   |  J   |  K   |  L   |;/FUNC|  =   |
 |------+------+------+------+------+------+------|  |------+------+------+------+------+------+------|
 |Shift |  Z   |  X   |  C   |  V   |  B   |  [   |  |  ]   |  N   |  M   |  ,   |  .   |  :   |  -   |
 |------+------+------+------+------+------+------|  |------+------+------+------+------+------+------|
-| Ctrl | GUI  | Alt  |  ~   |  $   | Bspc | Del  |  |Enter |Space | Left | Down |  Up  |Right |AltGr |
+| Ctrl | Alt  | GUI  |  ·   | NAV  | Bspc | Del  |  |Enter |Space | NAV  |  ·   |  ·   |  ·   |  ·   |
 '------'------'------'------'------|      |      |  |      |      |------'------'------'------'------'
                                    '------'------'  '------'------'
 ```
 
-### MEDIA, BLE Micro Pro and ZMK firmware (hold `;` or tap MEDIA)
+### NAV (hold `NAV`)
 
-`Pair` advertises to a new host and looks for the other half, `Host1`–`Host5` switch between paired hosts, `BLE`/`USB`
+```
+.------.------.------.------.------.------.                .------.------.------.------.------.------.
+|      |      |      |      |      |      |                |      |      |      |      |      |      |
+|------+------+------+------+------+------+------.  .------+------+------+------+------+------+------|
+|      |      |      | Btn1 | Btn2 |      |      |  |      |      |      |      |      |      |      |
+|------+------+------+------+------+------+------|  |------+------+------+------+------+------+------|
+|      |      |  M←  |  M↓  |  M↑  |  M→  | BASE |  | BASE | Left | Down |  Up  |Right |      |      |
+|------+------+------+------+------+------+------|  |------+------+------+------+------+------+------|
+|      |      |  W←  |  W↓  |  W↑  |  W→  |      |  |      | Home | PgDn | PgUp | End  |      |      |
+|------+------+------+------+------+------+------|  |------+------+------+------+------+------+------|
+|      |      |      |      |      |      |      |  |      |      |      |      |      |      |      |
+'------'------'------'------'------|      |      |  |      |      |------'------'------'------'------'
+                                   '------'------'  '------'------'
+```
+
+### FUNC, BLE Micro Pro and ZMK firmware (hold `;` or tap FUNC)
+
+`Host1`–`Host5` switch between paired hosts, `Pair` advertises to a new host and looks for the other half, `BLE`/`USB`
 choose where key presses go, `Batt` types the battery voltage, `Sleep` puts the keyboard in deep sleep.
 
 ```
 .------.------.------.------.------.------.                .------.------.------.------.------.------.
-| Boot |Host1 |Host2 |Host3 |Host4 |Host5 |                |      |      |      |      |      | Boot |
+|      |  F1  |  F2  |  F3  |  F4  |  F5  |                |  F6  |  F7  |  F8  |  F9  | F10  | F11  |
 |------+------+------+------+------+------+------.  .------+------+------+------+------+------+------|
-|EEClr | Pair | BLE  | USB  | Batt |      |      |  |      | Prev | Mute |      | Next |      |      |
+|      |Host1 |Host2 |Host3 |Host4 |Host5 |      |  |      |      |      |      |      |      | F12  |
 |------+------+------+------+------+------+------|  |------+------+------+------+------+------+------|
-|      |      |      |      |      |      | BASE |  | BASE | Rwd  | Vol- | Vol+ | Fwd  |      | Play |
+|      | Pair | BLE  | USB  | Batt |      | BASE |  | BASE | Prev | Vol- | Vol+ | Next |      | Play |
 |------+------+------+------+------+------+------|  |------+------+------+------+------+------+------|
-|      |      |      |      |      |      |      |  |      |      |      |      |      |      | Stop |
+|      |      |      |      |      |      |      |  |      |      |      |      |      |      |      |
 |------+------+------+------+------+------+------|  |------+------+------+------+------+------+------|
 |Sleep |      |      |      |      |      |      |  |      |      |      |      |      |      |      |
 '------'------'------'------'------|      |      |  |      |      |------'------'------'------'------'
                                    '------'------'  '------'------'
 ```
 
-### MEDIA, Pro Micro firmware
+### FUNC, Pro Micro firmware
+
+`Mode+`/`Mode-` step through the RGB effects, `RGB` toggles the lighting and `On`/`Off` switch it on and off.
 
 ```
 .------.------.------.------.------.------.                .------.------.------.------.------.------.
-| Boot | Hue- | Hue+ | Sat- | Sat+ |Mode- |                |      |      |      |      |      | Boot |
+| Sat+ |  F1  |  F2  |  F3  |  F4  |  F5  |                |  F6  |  F7  |  F8  |  F9  | F10  | F11  |
 |------+------+------+------+------+------+------.  .------+------+------+------+------+------+------|
-|EEClr |      |      |      |      |      |Mode+ |  |      | Prev | Mute |      | Next |      |      |
+| Sat- |Mode+ |      |      |      |      |      |  |      |      |      |      |      |      | F12  |
 |------+------+------+------+------+------+------|  |------+------+------+------+------+------+------|
-|      |      |      |      |      |      | BASE |  | BASE | Rwd  | Vol- | Vol+ | Fwd  |      | Play |
+| Bri+ | RGB  |Mode+ |Mode- | Hue+ | Hue- | BASE |  | BASE | Prev | Vol- | Vol+ | Next |      | Play |
 |------+------+------+------+------+------+------|  |------+------+------+------+------+------+------|
-|      |      |      |      |      |      |      |  |      |      |      |      |      |      | Stop |
+| Bri- | Off  |      |      |      |      |      |  |      |      |Mode+ |      |      |      |      |
 |------+------+------+------+------+------+------|  |------+------+------+------+------+------+------|
-| RGB  | Spd- | Spd+ | Bri- | Bri+ |      |      |  |      |      |      |      |      |      |      |
+|      |      |      |      |      |  On  | Off  |  |      |      |      |      |      |      |      |
 '------'------'------'------'------|      |      |  |      |      |------'------'------'------'------'
                                    '------'------'  '------'------'
 ```
 
 In the Pro Micro firmware the three LEDs at the top of each half are indicators. On the left they show Caps Lock, Num
-Lock and Scroll Lock. On the right they show which of MEDIA (purple), NUMPAD (green) and FUNC (orange) are latched on.
+Lock and Scroll Lock. On the right they show which of NAV (purple), FUNC (orange) and NUMPAD (green) are on.
 
-### NUMPAD
+### NUMPAD (tap NUMPD)
 
 ```
 .------.------.------.------.------.------.                .------.------.------.------.------.------.
-| Boot |      |      | Btn4 | Btn5 |      |                |      |NumLk |  /   |  *   |  -   | Boot |
+| Boot |      |      |      |      |      |                |      |NumLk |  /   |  *   |  -   |      |
 |------+------+------+------+------+------+------.  .------+------+------+------+------+------+------|
-|      | Acc0 | Back | Btn1 | Btn2 | Frwd |      |  |      |  (   |  7   |  8   |  9   |  +   |EEClr |
+|Reboot|      |      |      |      |      |      |  |      |      |  7   |  8   |  9   |  +   |      |
 |------+------+------+------+------+------+------|  |------+------+------+------+------+------+------|
-|      | Acc1 |  M←  |  M↓  |  M↑  |  M→  | BASE |  | BASE |  )   |  4   |  5   |  6   |  .   |      |
+|EEClr |      |      |      |      |      | BASE |  | BASE |      |  4   |  5   |  6   |  ,   |      |
 |------+------+------+------+------+------+------|  |------+------+------+------+------+------+------|
-|      | Acc2 |  W←  |  W↓  |  W↑  |  W→  | Btn3 |  |      |  0   |  1   |  2   |  3   |  ,   |      |
+|      |      |      |      |      |      |      |  |      |      |  1   |  2   |  3   |  =   |      |
 |------+------+------+------+------+------+------|  |------+------+------+------+------+------+------|
-|      |      |      |      |      |      |      |  |      |  0   |      |      |      |      |      |
+|      |      |      |      |      |      |      |  |      |      |      |  0   |  .   |  ,   |      |
 '------'------'------'------'------|      |      |  |      |      |------'------'------'------'------'
                                    '------'------'  '------'------'
 ```
 
-### FUNC
-
-```
-.------.------.------.------.------.------.                .------.------.------.------.------.------.
-| Boot |  F1  |  F2  |  F3  |  F4  |  F5  |                |  F6  |  F7  |  F8  |  F9  | F10  | F11  |
-|------+------+------+------+------+------+------.  .------+------+------+------+------+------+------|
-|EEClr |      |      |      |      |      |      |  | BASE | Ins  | Home | PgUp |      |PrtSc | F12  |
-|------+------+------+------+------+------+------|  |------+------+------+------+------+------+------|
-|      |      |      |      |      |      | BASE |  | BASE | Del  | End  | PgDn |      |      |      |
-|------+------+------+------+------+------+------|  |------+------+------+------+------+------+------|
-|      |      |      |      |      |S-Ins |      |  |      |      |      |      |      | RGUI |RShft |
-|------+------+------+------+------+------+------|  |------+------+------+------+------+------+------|
-|      |      |      | C+A  |      |      |      |  |      |      |      |      |      |      |RCtrl |
-'------'------'------'------'------|      |      |  |      |      |------'------'------'------'------'
-                                   '------'------'  '------'------'
-```
+The `,` and `=` beside the numbers are the keypad's own comma and equals (`KC_PCMM`, `KC_PEQL`); the `,` on the bottom
+row is the normal comma.
 
 ## Building
 
@@ -157,7 +159,7 @@ works too. On Linux with avrdude installed, `just flash-ergo68-promicro` waits f
 flashes `build/ergo68_pro_micro.hex` (give the serial port as `just flash-ergo68-promicro /dev/ttyACM1` if it isn't
 `/dev/ttyACM0`).
 
-Once the firmware is on, `Boot` (top-left key on the MEDIA, NUMPAD and FUNC layers) also starts the bootloader. Connect
+Once the firmware is on, `Boot` (top-left key on the NUMPAD layer) also starts the bootloader. Connect
 the halves with the TRS/TRRS cable and plug the left half into the computer.
 [Remap's configure page](https://remap-keys.app/configure) can then edit the keymap live, as with Yushakobo's own
 firmware.
@@ -183,7 +185,7 @@ screenshots of every step (in Japanese).
 
 1. Put the BMP in bootloader mode, either:
    * switch the battery off, then hold the reset switch on the PCB while plugging in USB, or
-   * with the keyboard on USB, press `Boot` (top-left key on the MEDIA, NUMPAD and FUNC layers).
+   * with the keyboard on USB, press `Boot` (top-left key on the NUMPAD layer).
 
    The BMP shows up as a USB drive that contains `INFO_UF2.TXT`.
 2. Copy `ergo68_ble_micro_pro.uf2` onto the drive and wait for it to finish. Don't unplug it while it copies.
@@ -203,11 +205,11 @@ keyboard is plugged in. `DISABLE_MSC` in `config.h` turns it off; remove that li
 
 * **Both halves on Bluetooth** pair with each other during the first few seconds after both are switched on. Switch on
   the left half, then the right half within a few seconds.
-* **Computers and phones:** the keyboard advertises for a few seconds after it starts, or press `Pair` (hold `;` + Q).
-  It appears as *ergo68*. Pair with up to five hosts and switch between them with `Host1`–`Host5` (hold `;` + 1–5).
+* **Computers and phones:** the keyboard advertises for a few seconds after it starts, or press `Pair` (hold `;` + A).
+  It appears as *ergo68*. Pair with up to five hosts and switch between them with `Host1`–`Host5` (hold `;` + Q–T).
   To pair another device, turn Bluetooth off on the devices that are already paired first.
 * **USB:** plug a USB cable into the left half. If no Bluetooth host is connected it switches to USB by itself;
-  otherwise press `USB` (hold `;` + E). `BLE` (hold `;` + W) switches back, and unplugging USB returns to Bluetooth.
+  otherwise press `USB` (hold `;` + D). `BLE` (hold `;` + S) switches back, and unplugging USB returns to Bluetooth.
 
 Pairing problems are usually fixed by removing the pairing on both sides and pairing again; see the
 [BMP FAQ](https://sekigon-gonnoc.github.io/BLE-Micro-Pro/#/FAQ).
@@ -223,7 +225,7 @@ used; the right half gets its power through the cable, so you can take the right
 NiMH cells work fine. Things to know:
 
 * **Nothing on the keyboard charges them.** Charge them in a NiMH charger.
-* **Go by the voltage, not a percentage.** `Batt` (hold `;` + R) types the voltage of each half in millivolts, left half
+* **Go by the voltage, not a percentage.** `Batt` (hold `;` + F) types the voltage of each half in millivolts, left half
   first. A NiMH cell reads about 1.3–1.4 V straight off the charger, stays around 1.2 V for most of its charge and is
   nearly empty around 1.1 V. Any percentage meant for 1.5 V alkaline cells will look low.
 * **Use low-self-discharge cells** (Eneloop and similar). The keyboard draws so little that ordinary NiMH cells lose a
@@ -249,7 +251,7 @@ firmwares have the same layers.
 artifact from the run. It isn't built in the devcontainer.
 
 **Flashing:** the BMP Boost's bootloader takes ZMK's `.uf2` the same way as the QMK one. Put each half in bootloader
-mode (battery off, hold the reset switch while plugging in USB, or `Boot` on the MEDIA/NUMPAD/FUNC layers) and copy
+mode (battery off, hold the reset switch while plugging in USB, or `Boot` on the NUMPAD layer) and copy
 `ergo68_left-bmp_boost-zmk.uf2` onto the left half's drive and `ergo68_right-bmp_boost-zmk.uf2` onto the right's. To
 go back to QMK, flash `ergo68_ble_micro_pro.uf2` again; if the keyboard doesn't come back up, redo the Web Configurator
 setup.
@@ -282,7 +284,7 @@ the input's, so the thresholds in the config are a third of the numbers above.
 **Not calibrated yet.** The table assumes one cell straight on the battery input, but the Ergo68 has two cells per half,
 probably each through a diode that lowers the voltage the BMP Boost sees. Until a real reading is known, the percentage
 may be off and the low-battery switch-off is disabled (`CONFIG_ZMK_NON_LIPO_LOW_MV=0`). The QMK firmware's `Batt` key
-(hold `;` + R) types the voltage the BMP Boost measures; with that and a multimeter reading of the cells, the thresholds
+(hold `;` + F) types the voltage the BMP Boost measures; with that and a multimeter reading of the cells, the thresholds
 can be set properly.
 
 **Sleep:** a half goes to sleep after 15 minutes without a key press, or after a minute of looking for a connection it
@@ -318,15 +320,15 @@ Vial/Remap and works with the LPME-IO.
 **Pairing**
 
 1. *The halves with each other.* With QMK, switch on the left half, then the right half within a few seconds. If they
-   don't find each other, press `Pair` (hold `;` + Q) with both switched on. With ZMK they pair by themselves the first
+   don't find each other, press `Pair` (hold `;` + A) with both switched on. With ZMK they pair by themselves the first
    time both are on. If not, flash `settings_reset-bmp_boost-zmk.uf2` onto both and then the normal firmware again.
 2. *The computer.* Pair it with the left half: it appears as *ergo68* in the computer's Bluetooth settings, right after
-   switching on or after `Pair` (QMK). `Host1`–`Host5` (hold `;` + 1–5) switch between paired computers.
+   switching on or after `Pair` (QMK). `Host1`–`Host5` (hold `;` + Q–T) switch between paired computers.
 
 ### Running out of battery
 
 Plug the **left** half into the computer with USB. It runs from USB and sends key presses over it. QMK switches to USB
-by itself unless a Bluetooth host is connected (then press `USB`, hold `;` + E); ZMK prefers USB whenever it's
+by itself unless a Bluetooth host is connected (then press `USB`, hold `;` + D); ZMK prefers USB whenever it's
 plugged in.
 
 The halves keep talking over Bluetooth, so the right half only needs power, not a data connection. That's where the TRRS
@@ -364,7 +366,7 @@ The LEDs do work with the kit's Pro Micros (wired), including the indicator LEDs
 ## Changing the keymap
 
 * **In `keymap.c` (recommended):** edit, build, flash. The same file is used for every firmware; only the left half of
-  MEDIA differs between the BMP and Pro Micro builds (`#ifdef PROTOCOL_BMP`). Run `just ergo68-zmk-keymap` afterwards
+  FUNC differs between the BMP and Pro Micro builds (`#ifdef PROTOCOL_BMP`). Run `just ergo68-zmk-keymap` afterwards
   to carry the change over to ZMK.
 * **Live, without flashing:** [Remap](https://remap-keys.app/) works with both firmwares. On the BMP,
   [VIA Custom UI for Vial](https://sekigon-gonnoc.github.io/via-custom-ui-for-vial/) and [Vial](https://vial.rocks/)
@@ -400,7 +402,7 @@ I looked for other Ergo68 and BLE Micro Pro work to build on. This repo uses the
 
 * **BMP: the keymap doesn't change after flashing.** A saved default EEPROM image (`DEFAULT.BIN` on the *ergo68*
   drive, hidden by `DISABLE_MSC`) takes priority over `keymap.c`. Open the BMP's USB serial console (e.g. `screen /dev/ttyACM0` on Linux, TeraTerm on
-  Windows), run `default erase`, then press `EEClr` (left key on the second row of the MEDIA or FUNC layer).
+  Windows), run `default erase`, then press `EEClr` (left key on the third row of the NUMPAD layer).
 * **BMP: it doesn't show up as a drive in bootloader mode.** The battery was probably still on, so the BMP never
   restarted. Switch it off and try again.
 * **BMP: the batteries run down much faster than expected.** The BMP Boost docs warn that LEDs powered from its VCC pin
