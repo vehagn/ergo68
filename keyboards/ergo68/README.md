@@ -210,10 +210,11 @@ Pairing problems are usually fixed by removing the pairing on both sides and pai
 
 ### Batteries: AAA NiMH
 
-Yushakobo's [AAA battery kit](https://shop.yushakobo.jp/products/8011) for the Ergo68 holds one AAA cell per half and
+Yushakobo's [AAA battery kit](https://shop.yushakobo.jp/products/8011) for the Ergo68 holds two AAA cells per half and
 is meant for the [BMP Boost](https://github.com/sekigon-gonnoc/BLE-Micro-Pro/tree/master/bmp-boost), the BMP version with
-a step-up converter that runs from a single cell (0.7 V and up). The original BMP needs at least 1.7 V and can't run from
-one AAA cell. With an LPME-IO only the left half has a battery; the right half gets its power through the cable.
+a step-up converter that runs from very low voltages (0.7 V and up). The kit has a Schottky diode per cell, which suggests
+the two cells are in parallel, but I haven't confirmed how they're wired. With an LPME-IO only the left half's cells are
+used; the right half gets its power through the cable, so you can take the right half's cells out.
 
 NiMH cells work fine. Things to know:
 
@@ -269,12 +270,16 @@ Boost's cell as lithium and always show 0%, so this config uses sekigon-gonnoc's
 | 1.30 V+      | 100%                                                        |
 | 1.20 V       | 50% (where a NiMH cell spends most of its life)             |
 | 1.10 V       | 0%: time to charge                                          |
-| 1.05 V       | The half switches itself off to protect the cell, unless it's on USB |
+| 1.05 V       | The half switches itself off to protect the cell, unless it's on USB (disabled for now, see below) |
 
 The module measures the voltage at the BMP Boost's battery pin, which the board's 1:3 voltage divider puts at a third of
-the cell's, so the thresholds in the config are a third of the numbers above. I couldn't check the divider on real
-hardware, so compare the reported level against a multimeter once. If it reads far too high, the divider isn't there
-and the thresholds need multiplying by three.
+the input's, so the thresholds in the config are a third of the numbers above.
+
+**Not calibrated yet.** The table assumes one cell straight on the battery input, but the Ergo68 has two cells per half,
+probably each through a diode that lowers the voltage the BMP Boost sees. Until a real reading is known, the percentage
+may be off and the low-battery switch-off is disabled (`CONFIG_ZMK_NON_LIPO_LOW_MV=0`). The QMK firmware's `Batt` key
+(hold `;` + R) types the voltage the BMP Boost measures; with that and a multimeter reading of the cells, the thresholds
+can be set properly.
 
 **Sleep:** a half goes to sleep after 15 minutes without a key press, or after a minute of looking for a connection it
 doesn't get (the computer or the other half is off). A key press wakes it.
@@ -333,10 +338,10 @@ doesn't say whether it can also be powered through it. To try it safely:
 If the right half types, that's your fallback; leave the right battery switched off while it's powered over the cable.
 If it doesn't, the dependable fallback is a USB charger or power bank on the right half (or swapping in fresh cells).
 
-With ZMK this only works if you give up the low-battery protection on the right half. Powered over the cable, the
-right half isn't on USB and reads an empty or switched-off cell, so it switches itself off at once. To try it anyway,
-set `CONFIG_ZMK_NON_LIPO_LOW_MV=0` in the shield's `bmp_boost.conf`; that also stops it protecting the cells. A USB
-charger on the right half works with ZMK as it is.
+With ZMK, this clashes with its low-battery switch-off once that's calibrated and turned on. Powered over the cable,
+the right half isn't on USB and reads an empty or switched-off cell, so it would switch itself off at once. Keeping
+`CONFIG_ZMK_NON_LIPO_LOW_MV=0` in the shield's `bmp_boost.conf` avoids that, but then nothing protects the cells. A USB
+charger on the right half works either way.
 
 ### The LEDs
 
