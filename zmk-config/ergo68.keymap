@@ -16,33 +16,33 @@
         base {
             display-name = "BASE";
             bindings = <
-                &kp BSLH    &kp N1      &kp N2      &kp N3      &kp N4      &kp N5      &kp N6      &kp N7      &kp N8      &kp N9      &kp N0      &kp FSLH
-                &kp TAB     &kp Q       &kp W       &kp E       &kp R       &kp T       &kp ESC     &kp ESC     &kp Y       &kp U       &kp I       &kp O       &kp P       &kp SQT
-                &kp GRAVE   &kp A       &kp S       &kp D       &kp F       &kp G       &tog 2      &tog 3      &kp H       &kp J       &kp K       &kp L       &lt 2 SEMI  &kp EQUAL
-                &kp LSHFT   &kp Z       &kp X       &kp C       &kp V       &kp B       &kp LBKT    &kp RBKT    &kp N       &kp M       &kp COMMA   &kp DOT     &kp COLON   &kp MINUS
-                &kp LCTRL   &kp LALT    &kp LGUI    &none       &mo 1       &kp BSPC    &kp DEL     &kp RET     &kp SPACE   &mo 1       &none       &none       &none       &none
+                &kp BSLH         &kp N1           &kp N2           &kp N3           &kp N4           &kp N5           &kp N6           &kp N7           &kp N8           &kp N9           &kp N0           &kp FSLH
+                &kp TAB          &kp Q            &kp W            &kp E            &kp R            &kp T            &kp ESC          &kp ESC          &kp Y            &kp U            &kp I            &kp O            &kp P            &kp SQT
+                &kp GRAVE        &kp A            &kp S            &kp D            &kp F            &kp G            &tog 2           &tog 3           &kp H            &kp J            &kp K            &kp L            &lt 2 SEMI       &kp EQUAL
+                &kp LSHFT        &kp Z            &kp X            &kp C            &kp V            &kp B            &kp LBKT         &kp RBKT         &kp N            &kp M            &kp COMMA        &kp DOT          &kp COLON        &kp MINUS
+                &kp LCTRL        &kp LALT         &kp LGUI         &kp TILDE        &mo 1            &kp BSPC         &kp DEL          &kp RET          &kp SPACE        &mo 1            &kp DOLLAR       &kp NON_US_BSLH  &kp K_APP        &kp RALT
             >;
         };
 
         nav {
             display-name = "NAV";
             bindings = <
-                &trans           &trans           &trans           &trans           &trans           &trans           &trans           &trans           &trans           &trans           &trans           &trans
-                &trans           &trans           &trans           &mkp LCLK        &mkp RCLK        &trans           &trans           &trans           &trans           &trans           &trans           &trans           &trans           &trans
-                &trans           &trans           &mmv MOVE_LEFT   &mmv MOVE_DOWN   &mmv MOVE_UP     &mmv MOVE_RIGHT  &to 0            &to 0            &kp LEFT         &kp DOWN         &kp UP           &kp RIGHT        &trans           &trans
-                &trans           &trans           &msc SCRL_LEFT   &msc SCRL_DOWN   &msc SCRL_UP     &msc SCRL_RIGHT  &trans           &trans           &kp HOME         &kp PG_DN        &kp PG_UP        &kp END          &trans           &trans
-                &trans           &trans           &trans           &trans           &trans           &trans           &trans           &trans           &trans           &trans           &trans           &trans           &trans           &trans
+                &trans            &trans            &trans            &trans            &trans            &trans            &trans            &trans            &trans            &trans            &trans            &trans
+                &trans            &trans            &kp C_AC_BACK     &mkp LCLK         &mkp RCLK         &kp C_AC_FORWARD  &trans            &trans            &trans            &trans            &trans            &trans            &trans            &trans
+                &trans            &trans            &mmv MOVE_LEFT    &mmv MOVE_DOWN    &mmv MOVE_UP      &mmv MOVE_RIGHT   &to 0             &to 0             &kp LEFT          &kp DOWN          &kp UP            &kp RIGHT         &trans            &trans
+                &trans            &trans            &msc SCRL_LEFT    &msc SCRL_DOWN    &msc SCRL_UP      &msc SCRL_RIGHT   &mkp MCLK         &trans            &kp HOME          &kp PG_DN         &kp PG_UP         &kp END           &trans            &trans
+                &trans            &trans            &trans            &trans            &trans            &trans            &trans            &trans            &trans            &trans            &trans            &trans            &trans            &trans
             >;
         };
 
         func {
             display-name = "FUNC";
             bindings = <
-                &trans        &kp F1        &kp F2        &kp F3        &kp F4        &kp F5        &kp F6        &kp F7        &kp F8        &kp F9        &kp F10       &kp F11
-                &trans        &bt BT_SEL 0  &bt BT_SEL 1  &bt BT_SEL 2  &bt BT_SEL 3  &bt BT_SEL 4  &trans        &trans        &trans        &trans        &trans        &trans        &trans        &kp F12
-                &trans        &bt BT_CLR    &out OUT_BLE  &out OUT_USB  &none         &trans        &to 0         &to 0         &kp C_PREV    &kp C_VOL_DN  &kp C_VOL_UP  &kp C_NEXT    &trans        &kp C_PP
-                &trans        &trans        &trans        &trans        &trans        &trans        &trans        &trans        &trans        &trans        &trans        &trans        &trans        &trans
-                &none         &trans        &trans        &trans        &trans        &trans        &trans        &trans        &trans        &trans        &trans        &trans        &trans        &trans
+                &trans           &kp F1           &kp F2           &kp F3           &kp F4           &kp F5           &kp F6           &kp F7           &kp F8           &kp F9           &kp F10          &kp F11
+                &trans           &bt BT_SEL 0     &bt BT_SEL 1     &bt BT_SEL 2     &bt BT_SEL 3     &bt BT_SEL 4     &trans           &trans           &kp INS          &kp SLCK         &kp PSCRN        &kp PAUSE_BREAK  &trans           &kp F12
+                &trans           &bt BT_CLR       &out OUT_BLE     &out OUT_USB     &none            &trans           &to 0            &to 0            &kp C_PREV       &kp C_VOL_DN     &kp C_VOL_UP     &kp C_NEXT       &trans           &kp C_PP
+                &trans           &trans           &trans           &trans           &trans           &trans           &trans           &trans           &kp C_RW         &kp C_MUTE       &trans           &kp C_FF         &trans           &kp C_STOP
+                &none            &trans           &trans           &trans           &trans           &trans           &trans           &trans           &trans           &trans           &trans           &trans           &trans           &trans
             >;
         };
 

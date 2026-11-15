@@ -50,15 +50,15 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_TAB,  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_ESC,           KC_ESC,  KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_QUOT,
         KC_GRV,  KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    L_FUNC,           L_NUMPD, KC_H,    KC_J,    KC_K,    KC_L,    FN_SCLN, KC_EQL,
         KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_LBRC,          KC_RBRC, KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_COLN, KC_MINS,
-        KC_LCTL, KC_LALT, KC_LGUI, XXXXXXX, L_NAV,   KC_BSPC, KC_DEL,           KC_ENT,  KC_SPC,  L_NAV,   XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX
+        KC_LCTL, KC_LALT, KC_LGUI, KC_TILD, L_NAV,   KC_BSPC, KC_DEL,           KC_ENT,  KC_SPC,  L_NAV,   KC_DLR,  KC_NUBS, KC_APP,  KC_RALT
     ),
 
     /* NAV (held): mouse on the left, arrows on HJKL and Home/PgDn/PgUp/End below them */
     [_NAV] = LAYOUT_ergo68(
         _______, _______, _______, _______, _______, _______,                             _______, _______, _______, _______, _______, _______,
-        _______, _______, _______, MS_BTN1, MS_BTN2, _______, _______,          _______, _______, _______, _______, _______, _______, _______,
+        _______, _______, KC_WBAK, MS_BTN1, MS_BTN2, KC_WFWD, _______,          _______, _______, _______, _______, _______, _______, _______,
         _______, _______, MS_LEFT, MS_DOWN, MS_UP,   MS_RGHT, L_BASE,           L_BASE,  KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT, _______, _______,
-        _______, _______, MS_WHLL, MS_WHLD, MS_WHLU, MS_WHLR, _______,          _______, KC_HOME, KC_PGDN, KC_PGUP, KC_END,  _______, _______,
+        _______, _______, MS_WHLL, MS_WHLD, MS_WHLU, MS_WHLR, MS_BTN3,          _______, KC_HOME, KC_PGDN, KC_PGUP, KC_END,  _______, _______,
         _______, _______, _______, _______, _______, _______, _______,          _______, _______, _______, _______, _______, _______, _______
     ),
 
@@ -70,9 +70,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      */
     [_FUNC] = LAYOUT_ergo68(
         _______, KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,                               KC_F6,   KC_F7,   KC_F8,   KC_F9,   KC_F10,  KC_F11,
-        _______, ADV_ID1, ADV_ID2, ADV_ID3, ADV_ID4, ADV_ID5, _______,          _______, _______, _______, _______, _______, _______, KC_F12,
+        _______, ADV_ID1, ADV_ID2, ADV_ID3, ADV_ID4, ADV_ID5, _______,          _______, KC_INS,  KC_SCRL, KC_PSCR, KC_PAUS, _______, KC_F12,
         _______, AD_WO_L, SEL_BLE, SEL_USB, BATT_LV, _______, L_BASE,           L_BASE,  KC_MPRV, KC_VOLD, KC_VOLU, KC_MNXT, _______, KC_MPLY,
-        _______, _______, _______, _______, _______, _______, _______,          _______, _______, _______, _______, _______, _______, _______,
+        _______, _______, _______, _______, _______, _______, _______,          _______, KC_MRWD, KC_MUTE, _______, KC_MFFD, _______, KC_MSTP,
         ENT_SLP, _______, _______, _______, _______, _______, _______,          _______, _______, _______, _______, _______, _______, _______
     ),
 #else
@@ -81,9 +81,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      */
     [_FUNC] = LAYOUT_ergo68(
         RM_SATU, KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,                               KC_F6,   KC_F7,   KC_F8,   KC_F9,   KC_F10,  KC_F11,
-        RM_SATD, RM_NEXT, _______, _______, _______, _______, _______,          _______, _______, _______, _______, _______, _______, KC_F12,
+        RM_SATD, RM_NEXT, _______, _______, _______, _______, _______,          _______, KC_INS,  KC_SCRL, KC_PSCR, KC_PAUS, _______, KC_F12,
         RM_VALU, RM_TOGG, RM_NEXT, RM_PREV, RM_HUEU, RM_HUED, L_BASE,           L_BASE,  KC_MPRV, KC_VOLD, KC_VOLU, KC_MNXT, _______, KC_MPLY,
-        RM_VALD, RM_OFF,  _______, _______, _______, _______, _______,          _______, _______, RM_NEXT, _______, _______, _______, _______,
+        RM_VALD, RM_OFF,  _______, _______, _______, _______, _______,          _______, KC_MRWD, KC_MUTE, _______, KC_MFFD, _______, KC_MSTP,
         _______, _______, _______, _______, _______, RM_ON,   RM_OFF,           _______, _______, _______, _______, _______, _______, _______
     ),
 #endif

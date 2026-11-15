@@ -31,6 +31,7 @@ KEYS = {
     "KC_RGUI": "RGUI", "KC_LALT": "LALT", "KC_RALT": "RALT", "KC_MENU": "K_MENU", "KC_APP": "K_APP",
     "KC_LEFT": "LEFT", "KC_DOWN": "DOWN", "KC_UP": "UP", "KC_RGHT": "RIGHT", "KC_INS": "INS",
     "KC_HOME": "HOME", "KC_END": "END", "KC_PGUP": "PG_UP", "KC_PGDN": "PG_DN", "KC_PSCR": "PSCRN",
+    "KC_SCRL": "SLCK", "KC_PAUS": "PAUSE_BREAK", "KC_NUBS": "NON_US_BSLH",
     "KC_NUM": "KP_NUM", "KC_PSLS": "KP_SLASH", "KC_PAST": "KP_MULTIPLY", "KC_PMNS": "KP_MINUS",
     "KC_PPLS": "KP_PLUS", "KC_PDOT": "KP_DOT", "KC_PCMM": "KP_COMMA", "KC_PEQL": "KP_EQUAL",
     "KC_MPRV": "C_PREV", "KC_MNXT": "C_NEXT", "KC_MUTE": "C_MUTE", "KC_VOLD": "C_VOL_DN",
