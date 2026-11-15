@@ -18,9 +18,9 @@ jobs:
       - uses: devcontainers/ci@v0.3
         with:
           push: never
-          runCmd: just bmp-diagnostics
+          runCmd: scripts/bmp-toolchain-probe.sh
       - uses: actions/upload-artifact@v4
         with:
-          name: bmp-diagnostics
-          path: build/bmp-diagnostics/
+          name: bmp-toolchains
+          path: build/bmp-toolchains/
           if-no-files-found: error
