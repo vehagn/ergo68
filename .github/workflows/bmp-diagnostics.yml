@@ -1,0 +1,26 @@
+name: BLE Micro Pro diagnostics
+
+# Temporary: builds the fork's stock firmware and this keymap at two fork versions, to find out
+# why the stonegarden BLE Micro Pro build doesn't start. See `just bmp-diagnostics`.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnostics:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: devcontainers/ci@v0.3
+        with:
+          push: never
+          runCmd: just bmp-diagnostics
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bmp-diagnostics
+          path: build/bmp-diagnostics/
+          if-no-files-found: error

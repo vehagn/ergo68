@@ -24,6 +24,9 @@ bmp_repo := env_var_or_default("BMP_QMK_REPO", "https://github.com/sekigon-gonno
 # match the bootloader installed by the BLE Micro Pro Web Configurator.
 bmp_ref := env_var_or_default("BMP_QMK_REF", "4de02c1aeec5a34f0744a97213499441c508d565")
 bmp_dir := env_var_or_default("BMP_QMK_DIR", root / ".qmk/bmp")
+# Release bmp-vial-1.4.0, the version the Web Configurator installs (used by bmp-diagnostics).
+bmp140_ref := "be3adb0a11ab751d2cdf35ba26f5b9011d937ec2"
+bmp140_dir := bmp_dir + "-1.4.0"
 
 mainline_repo := env_var_or_default("MAINLINE_QMK_REPO", "https://github.com/qmk/qmk_firmware.git")
 # Release 0.34.7
@@ -56,6 +59,19 @@ ergo68-bmp: (_fetch bmp_dir bmp_repo bmp_ref "lib/printf") (_install-keymap bmp_
     @mkdir -p {{ quote(build_dir) }}
     @cp {{ quote(bmp_dir / ".build" / "ble_micro_pro_" + keymap + ".uf2") }} {{ quote(ergo68_uf2) }}
     @echo "Built {{ ergo68_uf2 }}"
+
+# Diagnostic BLE Micro Pro builds, to find out why a build doesn't start: the fork's stock Vial
+# firmware and this keymap, at the pinned commit and at release 1.4.0 (build/bmp-diagnostics/)
+bmp-diagnostics: (_fetch bmp_dir bmp_repo bmp_ref "lib/printf") (_make bmp_dir "ble_micro_pro:vial:uf2") (_fetch bmp140_dir bmp_repo bmp140_ref "lib/printf") (_make bmp140_dir "ble_micro_pro:vial:uf2") (_install-keymap bmp140_dir "ble_micro_pro" "ergo68") (_make bmp140_dir ergo68_bmp_target)
+    #!/usr/bin/env bash
+    set -euo pipefail
+    out={{ quote(build_dir / "bmp-diagnostics") }}
+    mkdir -p "$out"
+    cp {{ quote(bmp_dir / ".build/ble_micro_pro_vial.uf2") }} "$out/stock_vial_pinned.uf2"
+    cp {{ quote(bmp140_dir / ".build/ble_micro_pro_vial.uf2") }} "$out/stock_vial_1_4_0.uf2"
+    cp {{ quote(bmp140_dir / ".build/ble_micro_pro_vial.hex") }} "$out/stock_vial_1_4_0.hex" 2>/dev/null || cp {{ quote(bmp140_dir / ".build/ble_micro_pro_vial.elf") }} "$out/stock_vial_1_4_0.elf"
+    cp {{ quote(bmp140_dir / ".build" / "ble_micro_pro_" + keymap + ".uf2") }} "$out/stonegarden_1_4_0.uf2"
+    ls -la "$out"
 
 # Ergo68 with Pro Micros (the kit's controllers): build/ergo68_pro_micro.hex
 ergo68-promicro: (_fetch mainline_dir mainline_repo mainline_ref "lib/lufa" "lib/printf") (_install-keymap mainline_dir "yushakobo/ergo68" "ergo68") (_make mainline_dir ergo68_promicro_target)
