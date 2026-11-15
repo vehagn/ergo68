@@ -7,6 +7,11 @@
 #define VIAL_UNLOCK_COMBO_ROWS { 0, 1 }
 #define VIAL_UNLOCK_COMBO_COLS { 0, 1 }
 
+// BLE Micro Pro: don't show the keyboard's own USB drive (ergo68, with VERSION.TXT and the config
+// files) while it runs, as in the fork's vial_no_msc keymap. The bootloader's BLEMICROPRO drive for
+// flashing is unaffected. Remove to get the drive back.
+#define DISABLE_MSC 1
+
 // Uncomment to stop a new firmware from replacing the keymap stored on the keyboard when the
 // layers in keymap.c change (e.g. if you mostly edit the keymap in Vial or Remap).
 // #define KEYMAP_SYNC_DISABLE

@@ -187,13 +187,17 @@ screenshots of every step (in Japanese).
 
    The BMP shows up as a USB drive that contains `INFO_UF2.TXT`.
 2. Copy `ergo68_ble_micro_pro.uf2` onto the drive and wait for it to finish. Don't unplug it while it copies.
-3. Unplug and replug. The drive now contains `VERSION.TXT`, and its `Build from:` line shows the `stonegarden-<commit>`
-   you just built.
+3. Unplug and replug. To check which build it runs, open the BMP's USB serial console (e.g. `screen /dev/ttyACM0` on
+   Linux, TeraTerm on Windows) and run `version`; it shows the `stonegarden-<commit>` you just built.
 4. Bluetooth in both halves: do the same for the right BMP. Only the left half uses the keymap, but keeping both halves on
    the same build avoids version mismatches between them.
 
 The keymap is part of the firmware but is kept in the BMP's (emulated) EEPROM so that Vial can edit it. The firmware
 reloads it from `keymap.c` on the first boot after you flash a changed keymap.
+
+The stock firmware also shows a USB drive called *ergo68* (with `VERSION.TXT` and the config files) whenever the
+keyboard is plugged in. `DISABLE_MSC` in `config.h` turns it off; remove that line to get it back. The bootloader's
+`BLEMICROPRO` drive, which you flash with, is unaffected.
 
 ### Pairing, Bluetooth and USB
 
@@ -394,8 +398,8 @@ I looked for other Ergo68 and BLE Micro Pro work to build on. This repo uses the
 
 ## Troubleshooting
 
-* **BMP: the keymap doesn't change after flashing.** A saved default EEPROM image (`DEFAULT.BIN` on the BMP's drive)
-  takes priority over `keymap.c`. Open the BMP's USB serial console (e.g. `screen /dev/ttyACM0` on Linux, TeraTerm on
+* **BMP: the keymap doesn't change after flashing.** A saved default EEPROM image (`DEFAULT.BIN` on the *ergo68*
+  drive, hidden by `DISABLE_MSC`) takes priority over `keymap.c`. Open the BMP's USB serial console (e.g. `screen /dev/ttyACM0` on Linux, TeraTerm on
   Windows), run `default erase`, then press `EEClr` (left key on the second row of the MEDIA or FUNC layer).
 * **BMP: it doesn't show up as a drive in bootloader mode.** The battery was probably still on, so the BMP never
   restarted. Switch it off and try again.
