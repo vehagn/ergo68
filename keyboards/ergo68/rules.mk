@@ -6,15 +6,17 @@ ifeq ($(strip $(PLATFORM_KEY)), bmp)
     VIAL_ENABLE = yes
     VIAL_INSECURE = yes
 
-    # Which half's hardware config to build in (bmp_config.c): left or right, for a BMP Boost in
-    # each half. Leave it empty to use the config the Web Configurator stored on the BMP instead.
+    # Which hardware config to build in (bmp_config.c): left or right for a BMP in each half, lpme
+    # for one BMP with an LPME-IO. Leave it empty to use the config the Web Configurator stored.
     SRC += bmp_config.c
-    ifeq ($(strip $(ERGO68_BMP_HALF)), left)
+    ifeq ($(strip $(ERGO68_BMP_CONFIG)), left)
         OPT_DEFS += -DERGO68_BMP_LEFT
-    else ifeq ($(strip $(ERGO68_BMP_HALF)), right)
+    else ifeq ($(strip $(ERGO68_BMP_CONFIG)), right)
         OPT_DEFS += -DERGO68_BMP_RIGHT
-    else ifneq ($(strip $(ERGO68_BMP_HALF)),)
-        $(error ERGO68_BMP_HALF must be left, right or empty, not "$(ERGO68_BMP_HALF)")
+    else ifeq ($(strip $(ERGO68_BMP_CONFIG)), lpme)
+        OPT_DEFS += -DERGO68_BMP_LPME
+    else ifneq ($(strip $(ERGO68_BMP_CONFIG)),)
+        $(error ERGO68_BMP_CONFIG must be left, right, lpme or empty, not "$(ERGO68_BMP_CONFIG)")
     endif
 else
     # Pro Micro (yushakobo/ergo68 in mainline QMK). Others with Ergo68 VIA builds report that

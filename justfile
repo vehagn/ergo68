@@ -48,20 +48,23 @@ default:
     @just --list --unsorted
 
 # Build every QMK firmware into build/
-build: ergo68-bmp ergo68-promicro ergodox-infinity ergodox-ez
+build: ergo68-bmp ergo68-bmp-lpme ergo68-promicro ergodox-infinity ergodox-ez
 
 # Ergo68 with a BMP Boost in each half, hardware config built in: build/ergo68_{left,right}_ble_micro_pro.uf2
-ergo68-bmp: (_ergo68-bmp-half "left") (_ergo68-bmp-half "right")
+ergo68-bmp: (_ergo68-bmp-config "left") (_ergo68-bmp-config "right")
+
+# Ergo68 with a BMP in the left half and an LPME-IO in the right, config built in: build/ergo68_lpme_ble_micro_pro.uf2
+ergo68-bmp-lpme: (_ergo68-bmp-config "lpme")
 
 # Ergo68 with BLE Micro Pros, using the config the Web Configurator stored: build/ergo68_ble_micro_pro.uf2
-ergo68-bmp-stored: (_ergo68-bmp-half "")
+ergo68-bmp-stored: (_ergo68-bmp-config "")
 
-# Build the BLE Micro Pro firmware with HALF's config built in (left or right), or none ("")
-_ergo68-bmp-half half: _check-bmp-gcc (_fetch bmp_dir bmp_repo bmp_ref "lib/printf") (_install-keymap bmp_dir "ble_micro_pro" "ergo68")
+# Build the BLE Micro Pro firmware with CONFIG built in (left, right or lpme; see bmp_config.c), or none ("")
+_ergo68-bmp-config config: _check-bmp-gcc (_fetch bmp_dir bmp_repo bmp_ref "lib/printf") (_install-keymap bmp_dir "ble_micro_pro" "ergo68")
     #!/usr/bin/env bash
     set -euo pipefail
-    {{ quote(just_executable()) }} -f {{ quote(justfile()) }} _make {{ quote(bmp_dir) }} {{ ergo68_bmp_target }} ERGO68_BMP_HALF={{ half }}
-    out={{ quote(build_dir / "ergo68_" + (if half == "" { "" } else { half + "_" }) + "ble_micro_pro.uf2") }}
+    {{ quote(just_executable()) }} -f {{ quote(justfile()) }} _make {{ quote(bmp_dir) }} {{ ergo68_bmp_target }} ERGO68_BMP_CONFIG={{ config }}
+    out={{ quote(build_dir / "ergo68_" + (if config == "" { "" } else { config + "_" }) + "ble_micro_pro.uf2") }}
     mkdir -p {{ quote(build_dir) }}
     cp {{ quote(bmp_dir / ".build" / "ble_micro_pro_" + keymap + ".uf2") }} "$out"
     echo "Built $out"

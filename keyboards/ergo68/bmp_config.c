@@ -3,23 +3,40 @@
  * BLE Micro Pro: the Ergo68's hardware config, built into the firmware.
  *
  * The generic ble_micro_pro firmware gets its matrix, pins and split mode from a config that the
- * BLE Micro Pro Web Configurator writes to the BMP's flash. With ERGO68_BMP_HALF set (see
- * rules.mk), this file supplies that config instead, so a freshly flashed half works without the
+ * BLE Micro Pro Web Configurator writes to the BMP's flash. With ERGO68_BMP_CONFIG set (see
+ * rules.mk), this file supplies that config instead, so a freshly flashed BMP works without the
  * Web Configurator, and whatever config is stored is ignored. The values are those of
- * sekigon-gonnoc's Ergo68 configs (BLE-Micro-Pro/bmp-vial-config/yushakobo_ergo68_*_config.json).
+ * sekigon-gonnoc's Ergo68 configs (BLE-Micro-Pro/bmp-vial-config/yushakobo_ergo68_*_config.json):
+ *   left   master: a BMP in each half, this one talks to the computer and the right half
+ *   right  slave: the right half of that pair
+ *   lpme   single: one BMP in the left half, reading the right half through an LPME-IO
  */
 
 #include <string.h>
 #include "bmp.h"
 
-#if defined(ERGO68_BMP_LEFT) || defined(ERGO68_BMP_RIGHT)
+#if defined(ERGO68_BMP_LEFT) || defined(ERGO68_BMP_RIGHT) || defined(ERGO68_BMP_LPME)
 
-#    ifdef ERGO68_BMP_LEFT
+#    if defined(ERGO68_BMP_LEFT)
 #        define ERGO68_IS_LEFT true
-#        define ERGO68_MODE    SPLIT_MASTER // talks to the computer and to the right half
-#    else
+#        define ERGO68_MODE    SPLIT_MASTER
+#    elif defined(ERGO68_BMP_RIGHT)
 #        define ERGO68_IS_LEFT false
 #        define ERGO68_MODE    SPLIT_SLAVE
+#    else
+#        define ERGO68_IS_LEFT true
+#        define ERGO68_MODE    SINGLE
+#    endif
+
+#    ifdef ERGO68_BMP_LPME
+// The BMP also scans the right half through the LPME-IO, which repeats the left half's pins.
+#        define ERGO68_DIODES   MATRIX_COL2ROW_LPME
+#        define ERGO68_ROW_PINS {7, 8, 9, 10, 11, 7, 8, 9, 10, 11}
+#        define ERGO68_COL_PINS {20, 19, 18, 17, 16, 15, 14, 20, 19, 18, 17, 16, 15, 14}
+#    else
+#        define ERGO68_DIODES   MATRIX_COL2ROW
+#        define ERGO68_ROW_PINS {7, 8, 9, 10, 11}
+#        define ERGO68_COL_PINS {20, 19, 18, 17, 16, 15, 14}
 #    endif
 
 bool bmp_config_overwrite(bmp_api_config_t const *const config_on_storage, bmp_api_config_t *const keyboard_config) {
@@ -28,16 +45,16 @@ bool bmp_config_overwrite(bmp_api_config_t const *const config_on_storage, bmp_a
         .device_info = {.vid = 0x3265, .pid = 0x0011, .name = "ergo68", .manufacture = "yushakobo"},
         .matrix =
             {
-                // 10x7 in all; each half scans its own 5x7 with the same pins.
+                // 10x7 in all, rows 0-4 the left half and 5-9 the right; 5x7 per half.
                 .rows            = 10,
                 .cols            = 7,
                 .device_rows     = 5,
                 .device_cols     = 7,
                 .layer           = 8,
                 .debounce        = 1,
-                .diode_direction = MATRIX_COL2ROW,
-                .row_pins        = {7, 8, 9, 10, 11},
-                .col_pins        = {20, 19, 18, 17, 16, 15, 14},
+                .diode_direction = ERGO68_DIODES,
+                .row_pins        = ERGO68_ROW_PINS,
+                .col_pins        = ERGO68_COL_PINS,
                 .is_left_hand    = ERGO68_IS_LEFT,
             },
         .mode             = ERGO68_MODE,
