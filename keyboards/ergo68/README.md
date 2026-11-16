@@ -255,17 +255,21 @@ NiMH cells work fine. Things to know:
 * **Go by the voltage, not a percentage.** A NiMH cell reads about 1.3–1.4 V straight off the charger, stays around
   1.2 V for most of its charge and is nearly empty around 1.1 V, so two in series go from about 2.6 V to 2.2 V. Any
   percentage meant for 1.5 V alkaline cells will look low.
-* **`Batt` doesn't show the cells yet.** `Batt` (`FUNC`, F) types a voltage for each half in millivolts, left half
-  first, but this firmware never tells the BMP which input to measure, and on a BMP Boost the default is its `VCC`
-  output, not the `BT` battery input. Measured on both halves with fresh cells:
+* **`Batt` (`FUNC`, F)** types a voltage for each half in millivolts, left half first. By default the BMP measures its
+  supply, which on a BMP Boost is its `VCC` output, not the `BT` battery input. Measured on both halves with fresh
+  cells, before this firmware pointed it elsewhere:
 
   | Cells (2 in series) | `BT` to `G` | `VCC` to `GND` (pins 21, 23) | `Batt` |
   |---------------------|-------------|------------------------------|--------|
   | 2.59 V              | 2.27 V      | 2.20 V                       | 2200 mV |
 
   So the kit's diode and switch drop about 0.32 V before the BMP Boost. `VCC` is the step-up converter's output: it
-  follows the cells while they're above its set point and stays flat below it, so `Batt` can't warn about low cells.
-  ZMK measures `BT` and isn't affected.
+  follows the cells while they're above its set point and stays flat below it, so it can't show low cells. This
+  firmware therefore points the measurement at `BT` (`BMP_BATTERY_AIN` in `config.h`; comment it out on an original
+  BLE Micro Pro). **Not calibrated yet:** with fresh cells `Batt` should now show either about 2270 mV (the `BT`
+  voltage) or about 756 mV (the voltage at the pin, a third of it, after the board's divider). Which one tells how to
+  set `BMP_BATTERY_MIN_MV`/`MAX_MV`, the range of the percentage and the voltage below which the BMP switches the half
+  off; until then they're set so that neither case can switch a half off. ZMK measures `BT` too.
 * **Use low-self-discharge cells** (Eneloop and similar). The keyboard draws so little that ordinary NiMH cells lose a
   noticeable part of their charge to self-discharge.
 * **The left half runs down first.** The BMP docs give about 300 µA for the half that talks to the computer and about

@@ -165,10 +165,17 @@ static void sync_keymap(void) {
 #if defined(PROTOCOL_BMP) && defined(BMP_AUTO_SLEEP_MINUTES)
 #    include "state_controller.h"
 #endif
+#if defined(PROTOCOL_BMP) && defined(BMP_BATTERY_AIN)
+#    include "bmp.h"
+#endif
 
 void keyboard_post_init_user(void) {
 #ifdef SYNC_KEYMAP
     sync_keymap();
+#endif
+#if defined(PROTOCOL_BMP) && defined(BMP_BATTERY_AIN)
+    // Runs on both halves, so each measures its own battery (see config.h).
+    BMPAPI->adc.config_vcc_channel(BMP_BATTERY_AIN, BMP_BATTERY_MAX_MV, BMP_BATTERY_MIN_MV);
 #endif
 #if defined(PROTOCOL_BMP) && defined(BMP_AUTO_SLEEP_MINUTES)
     // The Ergo68 config from the Web Configurator leaves auto-sleep off (reserved[2] = 0).

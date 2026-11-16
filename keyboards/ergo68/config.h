@@ -16,6 +16,19 @@
 // layers in keymap.c change (e.g. if you mostly edit the keymap in Vial or Remap).
 // #define KEYMAP_SYNC_DISABLE
 
+// BMP Boost: measure the battery at the BT input (analog input AIN4, behind the board's 1:3
+// divider) instead of the BMP's default, which on a BMP Boost is its VCC output: that stays flat
+// while the cells run down, so Batt couldn't show low cells. Comment out BMP_BATTERY_AIN for an
+// original BLE Micro Pro. MIN/MAX are the range the battery percentage counts between, and below
+// MIN the BMP shuts the half down.
+// NOT CALIBRATED: it isn't known yet whether the BMP reports the BT voltage (about 2270 mV with
+// fresh cells) or the divided voltage at the pin (a third, about 756 mV). This range is safe for
+// both: the first reads 100%, the second about 78%, and neither is anywhere near MIN. Batt shows
+// which it is; then set the real range.
+#define BMP_BATTERY_AIN    4
+#define BMP_BATTERY_MIN_MV 600
+#define BMP_BATTERY_MAX_MV 800
+
 // BLE Micro Pro: put a half to sleep after this many minutes without a key press on it while on
 // battery, to save the cells (the Ergo68 config from the Web Configurator leaves auto-sleep off).
 // Comment out to turn it off. Not tried on this keyboard yet: check that a key press wakes it up.
