@@ -150,8 +150,8 @@ row is the normal comma.
 ones. The BLE Micro Pro firmware has the hardware config built in (see [Setup](#setup-bootloader-and-config)):
 `just ergo68-bmp` builds one file per half for Bluetooth in both halves, `just ergo68-bmp-lpme` the file for the
 LPME-IO setup. `just ergo68-bmp-stored` builds `ergo68_ble_micro_pro.uf2`, which uses the config the Web Configurator
-stored instead. The ZMK firmware is built by CI only (see [ZMK](#bluetooth-with-zmk-bmp-boost) below); after changing
-`keymap.c`, run `just ergo68-zmk-keymap` to update its keymap. CI fails if you forget.
+stored instead. `just ergo68-zmk` builds the ZMK firmware (see [ZMK](#bluetooth-with-zmk-bmp-boost) below). After changing
+`keymap.c`, run `just ergo68-zmk-keymap` to update the ZMK keymap; `just ergo68-zmk` and CI fail if you forget.
 
 ## Wired: Pro Micro
 
@@ -274,8 +274,9 @@ replaces the QMK firmware for the both-halves Bluetooth setup. The shield in
 [`zmk-config/ergo68.keymap`](../../zmk-config/ergo68.keymap) is generated from the BMP version of `keymap.c`, so both
 firmwares have the same layers.
 
-**Getting it:** every push builds it on GitHub with ZMK's own build workflow. Download the `ergo68-zmk-firmware`
-artifact from the run. It isn't built in the devcontainer.
+**Getting it:** `just ergo68-zmk` builds `ergo68_left-bmp_boost-zmk.uf2`, `ergo68_right-bmp_boost-zmk.uf2` and
+`settings_reset-bmp_boost-zmk.uf2` into `build/`, in the devcontainer or anywhere with west and the Zephyr SDK. Every
+push also builds them on GitHub with ZMK's own build workflow (artifact `ergo68-zmk-firmware`).
 
 **Flashing:** the BMP Boost's bootloader takes ZMK's `.uf2` the same way as the QMK one. Put each half in bootloader
 mode (battery off, hold the reset switch while plugging in USB, or `Boot` on the NUMPAD layer) and copy

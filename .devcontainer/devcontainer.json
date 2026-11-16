@@ -1,4 +1,4 @@
-// Build environment for the Ergo68 firmware (BLE Micro Pro and Pro Micro).
+// Build environment for all the firmware in this repo (QMK and ZMK).
 // Open the repo in VS Code and run "Dev Containers: Reopen in Container" (or start a GitHub Codespace),
 // then run `just build` (or Ctrl+Shift+B). CI builds in this same container.
 {
@@ -7,16 +7,18 @@
         "dockerfile": "Containerfile"
     },
     "remoteUser": "vscode",
-    // The justfile fetches the QMK trees into this volume. It survives container rebuilds and keeps
-    // the large QMK checkouts out of the bind-mounted workspace.
+    // The justfile fetches the QMK trees and the ZMK west workspace into these volumes. They survive
+    // container rebuilds and keep the large checkouts out of the bind-mounted workspace.
     "mounts": [
-        "source=ergo68-qmk-${devcontainerId},target=/qmk,type=volume"
+        "source=ergo68-qmk-${devcontainerId},target=/qmk,type=volume",
+        "source=ergo68-zmk-${devcontainerId},target=/zmk,type=volume"
     ],
     "containerEnv": {
         "BMP_QMK_DIR": "/qmk/bmp",
         "MAINLINE_QMK_DIR": "/qmk/mainline",
         // QMK_HOME for running the qmk CLI by hand; the justfile sets it per tree.
-        "QMK_HOME": "/qmk/mainline"
+        "QMK_HOME": "/qmk/mainline",
+        "ZMK_DIR": "/zmk"
     },
-    "postCreateCommand": "sudo chown vscode: /qmk && git config --global --add safe.directory ${containerWorkspaceFolder}"
+    "postCreateCommand": "sudo chown vscode: /qmk /zmk && git config --global --add safe.directory ${containerWorkspaceFolder}"
 }

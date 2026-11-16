@@ -22,6 +22,45 @@ RUN python3 -m venv /opt/qmk \
     && /opt/qmk/bin/pip install --no-cache-dir qmk
 ENV PATH=/opt/qmk/bin:$PATH
 
+# ZMK (Ergo68 on BMP Boosts): the same toolchain as ZMK's own build image for its Zephyr version
+# (zmkfirmware/zmk-docker, branch 4.1-branch): Zephyr 4.1.0's Python requirements, CMake 3.31.6 and
+# Zephyr SDK 0.16.9 with only the Arm toolchain. Keep ZEPHYR_VERSION in step with the zephyr revision
+# in ZMK's app/west.yml at the commit pinned in zmk-config/west.yml.
+ARG ZEPHYR_VERSION=4.1.0
+ARG ZEPHYR_SDK_VERSION=0.16.9
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ccache device-tree-compiler file g++ gcc gperf ninja-build protobuf-compiler python3-dev xz-utils \
+    && rm -rf /var/lib/apt/lists/*
+
+# West, Zephyr's Python requirements and CMake, in a virtualenv of their own. It isn't on PATH, so its
+# python3 doesn't shadow the qmk CLI's; `just ergo68-zmk` puts it first while it builds.
+RUN python3 -m venv /opt/zephyr \
+    && /opt/zephyr/bin/pip install --no-cache-dir \
+        -r "https://raw.githubusercontent.com/zephyrproject-rtos/zephyr/v${ZEPHYR_VERSION}/scripts/requirements-base.txt" \
+        west cmake==3.31.6 "protobuf~=5.29" grpcio-tools
+
+# The minimal SDK plus its Arm toolchain, checked against the release's sha256.sum.
+RUN set -eu; \
+    arch="$(uname -m)"; \
+    case "$arch" in \
+        x86_64)  sdk_sha=b433f19b334cd15f4d7696a958dda214a7737cf41432900d076adce4253782a5; \
+                 arm_sha=81162a8326e3cb82fcc53f20528aa7abec29a0bf8376fa009e0c887ba864aaf8 ;; \
+        aarch64) sdk_sha=e6b1f22a9727c4e5322676d9c18d95f7bd881218795f9e08ca4ef25e8f5d1551; \
+                 arm_sha=f21b0c5b45cd05c5cd7cb46fcf5ae27a0eeca73c18633706b790708110893ba0 ;; \
+        *) echo "no Zephyr SDK for $arch" >&2; exit 1 ;; \
+    esac; \
+    url="https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v${ZEPHYR_SDK_VERSION}"; \
+    cd /tmp; \
+    curl -fsSLo sdk.tar.xz "$url/zephyr-sdk-${ZEPHYR_SDK_VERSION}_linux-${arch}_minimal.tar.xz"; \
+    curl -fsSLo arm.tar.xz "$url/toolchain_linux-${arch}_arm-zephyr-eabi.tar.xz"; \
+    printf '%s  sdk.tar.xz\n%s  arm.tar.xz\n' "$sdk_sha" "$arm_sha" | sha256sum -c -; \
+    tar -xJf sdk.tar.xz -C /opt; \
+    tar -xJf arm.tar.xz -C "/opt/zephyr-sdk-${ZEPHYR_SDK_VERSION}"; \
+    rm sdk.tar.xz arm.tar.xz
+ENV ZEPHYR_SDK_INSTALL_DIR=/opt/zephyr-sdk-${ZEPHYR_SDK_VERSION} \
+    ZEPHYR_TOOLCHAIN_VARIANT=zephyr
+
 # Non-root user for VS Code; Dev Containers changes its UID/GID to match yours. Ubuntu's image
 # already has a user with UID 1000, which would take the UID Dev Containers wants to give vscode.
 RUN userdel --remove ubuntu 2>/dev/null; \

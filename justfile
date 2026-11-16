@@ -4,11 +4,12 @@
 #   Ergo68, Pro Micro           qmk/qmk_firmware         make yushakobo/ergo68:stonegarden
 #   ErgoDox Infinity            qmk/qmk_firmware         make input_club/ergodox_infinity:stonegarden
 #   ErgoDox EZ                  qmk/qmk_firmware         make ergodox_ez/base:stonegarden
-#   Ergo68, BMP Boost with ZMK  built by CI with ZMK's own workflow, from zmk-config/
+#   Ergo68, BMP Boost with ZMK  zmkfirmware/zmk           west build -b bmp_boost (from zmk-config/)
 #
 # Each QMK build fetches its QMK tree at a pinned version, copies the keymap from keyboards/ into it
 # as "stonegarden" and runs make. Needs git, make, the qmk CLI, arm-none-eabi-gcc and avr-gcc; the
-# devcontainer in .devcontainer/ has all of them. Flashing needs the USB device, so run the flash-*
+# ZMK build needs west, Zephyr's Python requirements and the Zephyr SDK. The devcontainer in
+# .devcontainer/ has all of them. Flashing needs the USB device, so run the flash-*
 # recipes on your own machine. The settings below can be overridden from the environment or the
 # command line, e.g. `just ez_variant=glow ergodox-ez`.
 
@@ -32,6 +33,12 @@ mainline_dir := env_var_or_default("MAINLINE_QMK_DIR", root / ".qmk/mainline")
 
 # ErgoDox EZ model: base, glow (RGB matrix) or shine (RGB underglow).
 ez_variant := env_var_or_default("ERGODOX_EZ_VARIANT", "base")
+
+# The ZMK west workspace (Zephyr, ZMK and modules from zmk-config/west.yml), and the virtualenv with
+# west, CMake and Zephyr's Python requirements (the devcontainer's; if it doesn't exist, whatever
+# west is on PATH is used).
+zmk_dir := env_var_or_default("ZMK_DIR", root / ".zmk")
+zephyr_venv := env_var_or_default("ZEPHYR_VENV", "/opt/zephyr")
 
 ergo68_bmp_target := "ble_micro_pro:" + keymap + ":uf2"
 ergo68_promicro_target := "yushakobo/ergo68:" + keymap
@@ -95,6 +102,44 @@ ergo68-zmk-keymap:
     python3 {{ quote(root / "scripts/qmk_to_zmk_keymap.py") }} {{ quote(root / "keyboards/ergo68") }} > "$tmp"
     mv "$tmp" {{ quote(zmk_keymap) }}
     echo "Wrote {{ zmk_keymap }}"
+
+# Ergo68 on BMP Boosts with ZMK: build/ergo68_{left,right}-bmp_boost-zmk.uf2 and settings_reset-bmp_boost-zmk.uf2
+ergo68-zmk: check-zmk-keymap (_zmk-build "ergo68_left") (_zmk-build "ergo68_right") (_zmk-build "settings_reset")
+
+# Build ZMK for the bmp_boost board with SHIELD, as ZMK's build-user-config workflow does in CI
+_zmk-build shield: _zmk-workspace
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -x {{ quote(zephyr_venv / "bin/west") }} ]; then export PATH={{ quote(zephyr_venv / "bin") }}:"$PATH"; fi
+    cd {{ quote(zmk_dir) }}
+    west build -p auto -s zmk/app -d {{ quote("build" / shield) }} -b bmp_boost -- \
+        -DZMK_CONFIG={{ quote(root / "zmk-config") }} -DSHIELD={{ quote(shield) }}
+    out={{ quote(build_dir / shield + "-bmp_boost-zmk.uf2") }}
+    mkdir -p {{ quote(build_dir) }}
+    cp {{ quote("build" / shield / "zephyr/zmk.uf2") }} "$out"
+    echo "Built $out"
+
+# Set up the ZMK west workspace, and update it when zmk-config/west.yml changes
+_zmk-workspace:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -x {{ quote(zephyr_venv / "bin/west") }} ]; then export PATH={{ quote(zephyr_venv / "bin") }}:"$PATH"; fi
+    ws={{ quote(zmk_dir) }}
+    manifest={{ quote(root / "zmk-config/west.yml") }}
+    # west only needs the manifest in the workspace (in a folder named after its `self: path`); the
+    # config itself is passed to each build with ZMK_CONFIG.
+    mkdir -p "$ws/zmk-config"
+    cp "$manifest" "$ws/zmk-config/west.yml"
+    if [ ! -d "$ws/.west" ]; then
+        (cd "$ws" && west init -l zmk-config)
+    fi
+    if ! cmp -s "$manifest" "$ws/.west/updated-west.yml"; then
+        echo "Fetching Zephyr, ZMK and modules for zmk-config/west.yml into $ws"
+        (cd "$ws" && west update --fetch-opt=--filter=tree:0)
+        cp "$manifest" "$ws/.west/updated-west.yml"
+    fi
+    # Registers this Zephyr with CMake (in ~/.cmake, so again after a container rebuild).
+    (cd "$ws" && west zephyr-export >/dev/null)
 
 # Check that zmk-config/ergo68.keymap is up to date with keyboards/ergo68/keymap.c
 check-zmk-keymap:

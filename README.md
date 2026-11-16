@@ -7,19 +7,22 @@ setup for all of them: a devcontainer, [just](https://github.com/casey/just) rec
 |--------------------------------------------------|-------------------------------------|----------------|-------------------------|-------------------------------------------------|----------------------------------------------------|
 | [Ergo68](keyboards/ergo68/README.md)             | Pro Micro (wired)                   | QMK            | `just ergo68-promicro`  | `ergo68_pro_micro.hex`                          | Remap, QMK Toolbox or `just flash-ergo68-promicro` |
 | [Ergo68](keyboards/ergo68/README.md)             | BLE Micro Pro or BMP Boost          | QMK (BMP fork) | `just ergo68-bmp`       | `ergo68_left/right_ble_micro_pro.uf2`           | Copy it onto the BMP's USB drive                   |
-| [Ergo68](keyboards/ergo68/README.md)             | BMP Boost                           | ZMK            | GitHub Actions          | `ergo68_left/right-bmp_boost-zmk.uf2`           | Copy it onto the BMP's USB drive                   |
+| [Ergo68](keyboards/ergo68/README.md)             | BMP Boost                           | ZMK            | `just ergo68-zmk`       | `ergo68_left/right-bmp_boost-zmk.uf2`           | Copy it onto the BMP's USB drive                   |
 | [ErgoDox Infinity](keyboards/ergodox/README.md)  | Built in (Kinetis MK20)             | QMK            | `just ergodox-infinity` | `ergodox_infinity.bin`                          | `just flash-ergodox-infinity` (dfu-util)           |
 | [ErgoDox EZ](keyboards/ergodox/README.md)        | Built in (ATmega32U4)               | QMK            | `just ergodox-ez`       | `ergodox_ez_base.hex`                           | Keymapp, QMK Toolbox or `just flash-ergodox-ez`    |
 
 ## Building
 
-`just build` builds every QMK firmware into `build/`, and `just` on its own lists all recipes. Each build fetches its QMK
-tree at a pinned version, copies the keymap from `keyboards/` into it as `stonegarden`, and runs QMK's `make`.
+`just build` builds every QMK firmware into `build/`, `just ergo68-zmk` the ZMK firmware, and `just` on its own lists
+all recipes. Each QMK build fetches its QMK tree at a pinned version, copies the keymap from `keyboards/` into it as
+`stonegarden`, and runs QMK's `make`. The ZMK build sets up a west workspace with the Zephyr, ZMK and modules pinned in
+`zmk-config/west.yml`, and runs `west build` the way ZMK's own CI workflow does.
 
 ### In the devcontainer (recommended)
 
 The [devcontainer](.devcontainer/devcontainer.json) is Ubuntu 24.04 with the qmk CLI, the compilers and just installed,
-so you don't need QMK or the compilers on your machine. It's Ubuntu 24.04 rather than QMK's own build image because the
+plus west and the Zephyr SDK for ZMK (the same versions as ZMK's own build image), so you don't need QMK, Zephyr or the
+compilers on your machine. It's Ubuntu 24.04 rather than QMK's own build image because the
 BLE Micro Pro firmware only starts when it's built with Ubuntu 24.04's `arm-none-eabi-gcc` (13.2.1), the compiler
 sekigon builds the official releases with. Built with any other version we tried, the bootloader takes the file but the
 firmware never starts. You need Docker and VS Code with the
@@ -32,7 +35,8 @@ GitHub Codespace.
 3. The firmware appears in `build/` in the repo folder on your own machine. In a Codespace, right-click the file in the
    Explorer and choose **Download**.
 
-The QMK trees live in a Docker volume mounted at `/qmk`, so container rebuilds don't download them again. The BLE Micro
+The QMK trees live in a Docker volume mounted at `/qmk` and the ZMK workspace in one at `/zmk` (about 1 GB, fetched by
+the first `just ergo68-zmk`), so container rebuilds don't download them again. The BLE Micro
 Pro fork is based on an older QMK that wants Python packages the current qmk CLI lacks; the build installs those in a
 virtualenv inside the fork's folder the first time. Flashing needs the USB device, so run the `flash-*` recipes (or
 Remap, QMK Toolbox, …) on your own machine, not in the container.
