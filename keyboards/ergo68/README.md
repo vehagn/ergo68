@@ -254,10 +254,18 @@ NiMH cells work fine. Things to know:
 * **Nothing on the keyboard charges them.** Charge them in a NiMH charger.
 * **Go by the voltage, not a percentage.** A NiMH cell reads about 1.3–1.4 V straight off the charger, stays around
   1.2 V for most of its charge and is nearly empty around 1.1 V, so two in series go from about 2.6 V to 2.2 V. Any
-  percentage meant for 1.5 V alkaline cells will look low. `Batt` (`FUNC`, F) types a voltage for each half in
-  millivolts, left half first, but it isn't settled yet what it measures: with cells at 1.296 V each (2.59 V) it read
-  2200 mV on both halves, which is either the `BT` input after a drop of about 0.4 V or the BMP Boost's own output.
-  Measuring between the `BT` and `G` pins with a multimeter tells which.
+  percentage meant for 1.5 V alkaline cells will look low.
+* **`Batt` doesn't show the cells yet.** `Batt` (`FUNC`, F) types a voltage for each half in millivolts, left half
+  first, but this firmware never tells the BMP which input to measure, and on a BMP Boost the default is its `VCC`
+  output, not the `BT` battery input. Measured on both halves with fresh cells:
+
+  | Cells (2 in series) | `BT` to `G` | `VCC` to `GND` (pins 21, 23) | `Batt` |
+  |---------------------|-------------|------------------------------|--------|
+  | 2.59 V              | 2.27 V      | 2.20 V                       | 2200 mV |
+
+  So the kit's diode and switch drop about 0.32 V before the BMP Boost. `VCC` is the step-up converter's output: it
+  follows the cells while they're above its set point and stays flat below it, so `Batt` can't warn about low cells.
+  ZMK measures `BT` and isn't affected.
 * **Use low-self-discharge cells** (Eneloop and similar). The keyboard draws so little that ordinary NiMH cells lose a
   noticeable part of their charge to self-discharge.
 * **The left half runs down first.** The BMP docs give about 300 µA for the half that talks to the computer and about
