@@ -328,8 +328,12 @@ The two cells are in series and the battery kit's diode and switch drop about 0.
 through the board's 1:3 voltage divider, so the thresholds in the config are a third of those. If the low-battery
 protection switches a half off, charge or replace its cells, or plug it into USB.
 
-**Sleep:** a half goes to sleep after 15 minutes without a key press, or after a minute of looking for a connection it
-doesn't get (the computer or the other half is off). A key press wakes it.
+**Sleep:** a half goes to sleep after 10 minutes without a key press, or after a minute of looking for a connection it
+doesn't get (the computer or the other half is off). A key press wakes it, and reconnecting takes a second or two.
+
+**Radio power:** both halves transmit at −4 dBm instead of ZMK's 0 dBm, to save battery. That's plenty for the other
+half and a computer on the same desk; if the connection drops out, go back to 0 dBm (`CONFIG_BT_CTLR_TX_PWR_0=y` in
+`zmk-config/ergo68.conf`).
 
 ## From an LPME-IO to two BMP Boosts
 
