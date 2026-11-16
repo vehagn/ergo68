@@ -304,7 +304,9 @@ go back to QMK, flash `ergo68_left_ble_micro_pro.uf2` and `ergo68_right_ble_micr
 * `Host1`–`Host5` select Bluetooth profiles 1–5. `Pair` forgets the current profile's pairing so a new device can pair
   with it. `BLE` and `USB` choose where key presses go, as in QMK.
 * `Batt`, `Sleep` and `EEClr` do nothing: ZMK reports the battery to the computer instead, goes to sleep by itself
-  (see below), and doesn't keep the keymap in EEPROM. The mouse acceleration keys do nothing either.
+  (see below), and doesn't keep the keymap in EEPROM.
+* The mouse keys on NAV (movement, scroll wheel, buttons 1–3) work as in QMK, over Bluetooth and USB. Browser Back and
+  Forward are ordinary keys.
 * The halves pair with each other on their own. If they don't, or to forget all pairings, flash
   `settings_reset-bmp_boost-zmk.uf2` onto both halves, then the normal firmware again.
 
