@@ -177,6 +177,11 @@ void keyboard_post_init_user(void) {
     // Runs on both halves, so each measures its own battery (see config.h).
     BMPAPI->adc.config_vcc_channel(BMP_BATTERY_AIN, BMP_BATTERY_MAX_MV, BMP_BATTERY_MIN_MV);
 #endif
+#if defined(PROTOCOL_BMP) && defined(BMP_LED_DATA_PIN)
+    // Keep the unused LED data line from floating (see config.h).
+    gpio_set_pin_output(BMP_LED_DATA_PIN);
+    gpio_write_pin_low(BMP_LED_DATA_PIN);
+#endif
 #if defined(PROTOCOL_BMP) && defined(BMP_AUTO_SLEEP_MINUTES)
     // The Ergo68 config from the Web Configurator leaves auto-sleep off (reserved[2] = 0).
     // Only applies on battery: the firmware never auto-sleeps while connected to USB.

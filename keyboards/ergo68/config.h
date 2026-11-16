@@ -30,6 +30,12 @@
 #define BMP_BATTERY_MIN_MV 1780
 #define BMP_BATTERY_MAX_MV 2280
 
+// BLE Micro Pro: hold the LEDs' data line (Pro Micro D3, BMP pin 1) low. The config drives no
+// LEDs, so the line would float, and on a BMP Boost the LEDs get just enough from VCC (about 2.2 V)
+// to latch noise on it as a colour (red is all they can show at that voltage) and keep it lit,
+// draining the cells. Comment out to leave the pin alone.
+#define BMP_LED_DATA_PIN 1
+
 // BLE Micro Pro: put a half to sleep after this many minutes without a key press on it while on
 // battery, to save the cells (the Ergo68 config from the Web Configurator leaves auto-sleep off).
 // Comment out to turn it off. Not tried on this keyboard yet: check that a key press wakes it up.

@@ -396,13 +396,20 @@ charger on the right half works either way.
 
 Unfortunately the LEDs can't be made to work with a BMP Boost, whatever the firmware does. The Ergo68 powers them from
 the controller's VCC pin. Yushakobo notes that with a BLE Micro Pro they only light on USB, and the original BLE Micro
-Pro deliberately puts about 4.3 V from USB on that pin for this kind of LED. On a BMP Boost that pin is its roughly 2.4 V
-supply, on battery and on USB alike. That's below what these addressable LEDs need (typically 3.5 V or more).
+Pro deliberately puts about 4.3 V from USB on that pin for this kind of LED. On a BMP Boost that pin is its own supply,
+measured at 2.20 V, on battery and on USB alike. That's below what these 74 addressable LEDs (37 per half) need, typically
+3.5 V or more.
+
+It is enough for their red part, though, which needs only about 2 V. With nothing driving the LEDs' data line it floats,
+and plugging in USB once left a half's LEDs latched red, staying lit on battery afterwards. So both firmwares now hold
+the data line low (`BMP_LED_DATA_PIN` in `config.h` for QMK, a GPIO hog in the shield's `bmp_boost.overlay` for ZMK).
+If a half lights up anyway, switch it off and on again: the LEDs start dark.
 
 They also cost battery even when dark. sekigon-gonnoc's BMP Boost notes warn that LEDs on its VCC output increase power
 use considerably, and suggest pulling that pin out of the con-through if the LEDs are already fitted. Doing that also
-disconnects the TRRS supply above, so it's a choice between the two. If your left cell already runs down much faster
-than expected, this is the likely reason.
+disconnects the TRRS supply above, so it's a choice between the two (with ZMK the TRRS supply can't be used anyway, see
+above). Pulling the pin also rules out the LEDs lighting up. If your cells run down much faster than expected, this is
+the likely reason.
 
 The LEDs do work with the kit's Pro Micros (wired), including the indicator LEDs.
 

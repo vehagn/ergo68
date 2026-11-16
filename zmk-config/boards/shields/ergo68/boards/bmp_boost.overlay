@@ -24,3 +24,16 @@
 &vbatt {
     status = "disabled";
 };
+
+/*
+ * Hold the LEDs' data line (Pro Micro D3, P0.08 on the BMP Boost) low. Nothing drives the LEDs, so
+ * the line would float, and the LEDs get just enough from VCC (about 2.2 V) to latch noise on it as
+ * a colour (red is all they can show at that voltage) and keep it lit, draining the cells.
+ */
+&gpio0 {
+    led_data_low {
+        gpio-hog;
+        gpios = <8 GPIO_ACTIVE_HIGH>;
+        output-low;
+    };
+};
