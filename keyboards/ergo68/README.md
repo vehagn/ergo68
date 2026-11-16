@@ -77,10 +77,15 @@ it there, `\` or `<` on others. `RAlt` doubles as the Compose key with the XKB o
                                    '------'------'  '------'------'
 ```
 
-### FUNC, BLE Micro Pro and ZMK firmware (hold `;` or tap FUNC)
+### FUNC, BLE Micro Pro and ZMK firmware (tap FUNC or hold `;`)
 
-`Host1`–`Host5` switch between paired hosts, `Pair` advertises to a new host and looks for the other half, `BLE`/`USB`
-choose where key presses go, `Batt` types the battery voltage, `Sleep` puts the keyboard in deep sleep.
+`Host1`–`Host5` switch between paired hosts, `Pair` advertises to a new host, `BLE`/`USB` choose where key presses go,
+`Batt` types the battery voltage, `Sleep` puts the keyboard in deep sleep.
+
+These keys are all on the left half, and so is the `FUNC` key on the base layer (inner column, middle row). Use that
+one to reach them: tap `FUNC`, press the key, then tap `BASE` (same spot) to go back. This README writes it as
+"`FUNC`, A". Holding `;` is quicker, but `;` is on the right half, so it only works while the right half is connected
+to the left: not when the halves haven't found each other, or the right half is off or out of battery.
 
 ```
 .------.------.------.------.------.------.                .------.------.------.------.------.------.
@@ -224,12 +229,13 @@ keyboard is plugged in. `DISABLE_MSC` in `config.h` turns it off; remove that li
 ### Pairing, Bluetooth and USB
 
 * **Both halves on Bluetooth** pair with each other during the first few seconds after both are switched on. Switch on
-  the left half, then the right half within a few seconds.
-* **Computers and phones:** the keyboard advertises for a few seconds after it starts, or press `Pair` (hold `;` + A).
-  It appears as *ergo68*. Pair with up to five hosts and switch between them with `Host1`–`Host5` (hold `;` + Q–T).
+  the left half, then the right half within a few seconds. If they don't find each other, switch both off and on again
+  the same way. No key helps here: until the halves are connected, the right half's keys don't reach the left.
+* **Computers and phones:** the keyboard advertises for a few seconds after it starts, or press `Pair` (`FUNC`, A).
+  It appears as *ergo68*. Pair with up to five hosts and switch between them with `Host1`–`Host5` (`FUNC`, Q–T).
   To pair another device, turn Bluetooth off on the devices that are already paired first.
 * **USB:** plug a USB cable into the left half. If no Bluetooth host is connected it switches to USB by itself;
-  otherwise press `USB` (hold `;` + D). `BLE` (hold `;` + S) switches back, and unplugging USB returns to Bluetooth.
+  otherwise press `USB` (`FUNC`, D). `BLE` (`FUNC`, S) switches back, and unplugging USB returns to Bluetooth.
 
 Pairing problems are usually fixed by removing the pairing on both sides and pairing again; see the
 [BMP FAQ](https://sekigon-gonnoc.github.io/BLE-Micro-Pro/#/FAQ).
@@ -245,14 +251,14 @@ used; the right half gets its power through the cable, so you can take the right
 NiMH cells work fine. Things to know:
 
 * **Nothing on the keyboard charges them.** Charge them in a NiMH charger.
-* **Go by the voltage, not a percentage.** `Batt` (hold `;` + F) types the voltage of each half in millivolts, left half
+* **Go by the voltage, not a percentage.** `Batt` (`FUNC`, F) types the voltage of each half in millivolts, left half
   first. A NiMH cell reads about 1.3–1.4 V straight off the charger, stays around 1.2 V for most of its charge and is
   nearly empty around 1.1 V. Any percentage meant for 1.5 V alkaline cells will look low.
 * **Use low-self-discharge cells** (Eneloop and similar). The keyboard draws so little that ordinary NiMH cells lose a
   noticeable part of their charge to self-discharge.
 * **The left half runs down first.** The BMP docs give about 300 µA for the half that talks to the computer and about
   100 µA for the other half.
-* **Switch off with the slide switch** when you're not using the keyboard, or press `Sleep` (hold `;` + left Ctrl).
+* **Switch off with the slide switch** when you're not using the keyboard, or press `Sleep` (`FUNC`, left Ctrl).
 
 Auto-sleep is off in the Ergo68 config from the Web Configurator, so this firmware turns it on: on battery, a half goes
 to sleep after 30 minutes without a key press (`BMP_AUTO_SLEEP_MINUTES` in `config.h`; comment it out to turn it off).
@@ -304,7 +310,7 @@ the input's, so the thresholds in the config are a third of the numbers above.
 **Not calibrated yet.** The table assumes one cell straight on the battery input, but the Ergo68 has two cells per half,
 probably each through a diode that lowers the voltage the BMP Boost sees. Until a real reading is known, the percentage
 may be off and the low-battery switch-off is disabled (`CONFIG_ZMK_NON_LIPO_LOW_MV=0`). The QMK firmware's `Batt` key
-(hold `;` + F) types the voltage the BMP Boost measures; with that and a multimeter reading of the cells, the thresholds
+(`FUNC`, F) types the voltage the BMP Boost measures; with that and a multimeter reading of the cells, the thresholds
 can be set properly.
 
 **Sleep:** a half goes to sleep after 15 minutes without a key press, or after a minute of looking for a connection it
@@ -338,16 +344,15 @@ Vial/Remap and works with the LPME-IO.
 
 **Pairing**
 
-1. *The halves with each other.* With QMK, switch on the left half, then the right half within a few seconds. If they
-   don't find each other, press `Pair` (hold `;` + A) with both switched on. With ZMK they pair by themselves the first
-   time both are on. If not, flash `settings_reset-bmp_boost-zmk.uf2` onto both and then the normal firmware again.
+1. *The halves with each other.* With QMK, switch on the left half, then the right half within a few seconds; if they
+   don't find each other, switch both off and try again. With ZMK they pair by themselves the first time both are on. If not, flash `settings_reset-bmp_boost-zmk.uf2` onto both and then the normal firmware again.
 2. *The computer.* Pair it with the left half: it appears as *ergo68* in the computer's Bluetooth settings, right after
-   switching on or after `Pair` (QMK). `Host1`–`Host5` (hold `;` + Q–T) switch between paired computers.
+   switching on or after `Pair` (QMK, `FUNC`, A). `Host1`–`Host5` (`FUNC`, Q–T) switch between paired computers.
 
 ### Running out of battery
 
 Plug the **left** half into the computer with USB. It runs from USB and sends key presses over it. QMK switches to USB
-by itself unless a Bluetooth host is connected (then press `USB`, hold `;` + D); ZMK prefers USB whenever it's
+by itself unless a Bluetooth host is connected (then press `USB`: `FUNC`, D); ZMK prefers USB whenever it's
 plugged in.
 
 The halves keep talking over Bluetooth, so the right half only needs power, not a data connection. That's where the TRRS
