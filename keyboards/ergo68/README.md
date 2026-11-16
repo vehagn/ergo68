@@ -244,16 +244,20 @@ Pairing problems are usually fixed by removing the pairing on both sides and pai
 
 Yushakobo's [AAA battery kit](https://shop.yushakobo.jp/products/8011) for the Ergo68 holds two AAA cells per half and
 is meant for the [BMP Boost](https://github.com/sekigon-gonnoc/BLE-Micro-Pro/tree/master/bmp-boost), the BMP version with
-a step-up converter that runs from very low voltages (0.7 V and up). The kit has a Schottky diode per cell, which suggests
-the two cells are in parallel, but I haven't confirmed how they're wired. With an LPME-IO only the left half's cells are
+a step-up converter that runs from very low voltages (0.7 V and up). The two cells are in series (a half stops when you
+take one out), so the BMP Boost's `BT` input gets about 2.6 V from fresh cells, less what the kit's diode and switch
+drop. With an LPME-IO only the left half's cells are
 used; the right half gets its power through the cable, so you can take the right half's cells out.
 
 NiMH cells work fine. Things to know:
 
 * **Nothing on the keyboard charges them.** Charge them in a NiMH charger.
-* **Go by the voltage, not a percentage.** `Batt` (`FUNC`, F) types the voltage of each half in millivolts, left half
-  first. A NiMH cell reads about 1.3–1.4 V straight off the charger, stays around 1.2 V for most of its charge and is
-  nearly empty around 1.1 V. Any percentage meant for 1.5 V alkaline cells will look low.
+* **Go by the voltage, not a percentage.** A NiMH cell reads about 1.3–1.4 V straight off the charger, stays around
+  1.2 V for most of its charge and is nearly empty around 1.1 V, so two in series go from about 2.6 V to 2.2 V. Any
+  percentage meant for 1.5 V alkaline cells will look low. `Batt` (`FUNC`, F) types a voltage for each half in
+  millivolts, left half first, but it isn't settled yet what it measures: with cells at 1.296 V each (2.59 V) it read
+  2200 mV on both halves, which is either the `BT` input after a drop of about 0.4 V or the BMP Boost's own output.
+  Measuring between the `BT` and `G` pins with a multimeter tells which.
 * **Use low-self-discharge cells** (Eneloop and similar). The keyboard draws so little that ordinary NiMH cells lose a
   noticeable part of their charge to self-discharge.
 * **The left half runs down first.** The BMP docs give about 300 µA for the half that talks to the computer and about
@@ -308,11 +312,11 @@ Boost's cell as lithium and always show 0%, so this config uses sekigon-gonnoc's
 The module measures the voltage at the BMP Boost's battery pin, which the board's 1:3 voltage divider puts at a third of
 the input's, so the thresholds in the config are a third of the numbers above.
 
-**Not calibrated yet.** The table assumes one cell straight on the battery input, but the Ergo68 has two cells per half,
-probably each through a diode that lowers the voltage the BMP Boost sees. Until a real reading is known, the percentage
-may be off and the low-battery switch-off is disabled (`CONFIG_ZMK_NON_LIPO_LOW_MV=0`). The QMK firmware's `Batt` key
-(`FUNC`, F) types the voltage the BMP Boost measures; with that and a multimeter reading of the cells, the thresholds
-can be set properly.
+**Not calibrated yet.** The table assumes one cell straight on the battery input, but the Ergo68 has two cells in
+series per half, so the input is about twice that (less the kit's diode and switch drop) and ZMK will show 100% until
+the thresholds are corrected. Until then the low-battery switch-off is disabled (`CONFIG_ZMK_NON_LIPO_LOW_MV=0`). A
+multimeter reading between the BMP Boost's `BT` and `G` pins, next to the cells' own voltage, gives the numbers to set
+them from.
 
 **Sleep:** a half goes to sleep after 15 minutes without a key press, or after a minute of looking for a connection it
 doesn't get (the computer or the other half is off). A key press wakes it.
