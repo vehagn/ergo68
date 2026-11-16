@@ -164,9 +164,11 @@ _make dir *args:
 
     # Run a command for this tree, with its own virtualenv (if any) first on PATH. QMK_USERSPACE is
     # unset so that mainline QMK doesn't copy firmware into a userspace someone has configured.
+    # The QMK trees live in a volume that outlasts container rebuilds, so a virtualenv made by an
+    # older image's Python can point at an interpreter that no longer exists; such a one is ignored.
     qmk_env() {
         local path="$PATH"
-        if [ -x "$dir/.venv/bin/qmk" ]; then
+        if [ -x "$dir/.venv/bin/qmk" ] && "$dir/.venv/bin/python" -c '' 2>/dev/null; then
             path="$dir/.venv/bin:$PATH"
         fi
         env -u QMK_USERSPACE PATH="$path" QMK_HOME="$dir" "$@"
@@ -180,7 +182,7 @@ _make dir *args:
     if ! qmk_env qmk hello >/dev/null 2>&1; then
         echo "The qmk CLI lacks Python packages $dir/requirements.txt needs; installing them in $dir/.venv"
         python="$(sed -n '1s/^#!//p' "$(command -v qmk)")" # the qmk CLI's own interpreter
-        ${python:-python3} -m venv "$dir/.venv"
+        ${python:-python3} -m venv --clear "$dir/.venv" # --clear replaces a broken leftover one
         "$dir/.venv/bin/python" -m pip install --quiet qmk -r "$dir/requirements.txt"
         qmk_env qmk hello >/dev/null
     fi
