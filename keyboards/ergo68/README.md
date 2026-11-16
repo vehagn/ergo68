@@ -314,21 +314,17 @@ Boost's cell as lithium and always show 0%, so this config uses sekigon-gonnoc's
 ([`boards/bmp_boost.overlay`](../../zmk-config/boards/shields/ergo68/boards/bmp_boost.overlay) and
 [`.conf`](../../zmk-config/boards/shields/ergo68/boards/bmp_boost.conf) in the shield):
 
-| Cell voltage | Reported                                                    |
-|--------------|-------------------------------------------------------------|
-| 1.30 V+      | 100%                                                        |
-| 1.20 V       | 50% (where a NiMH cell spends most of its life)             |
-| 1.10 V       | 0%: time to charge                                          |
-| 1.05 V       | The half switches itself off to protect the cell, unless it's on USB (disabled for now, see below) |
+| Per cell | At `BT` | Reported                                                                        |
+|----------|---------|---------------------------------------------------------------------------------|
+| 1.30 V+  | 2.28 V  | 100%                                                                            |
+| 1.20 V   | 2.08 V  | 50% (where a NiMH cell spends most of its life)                                 |
+| 1.10 V   | 1.88 V  | 0%: time to charge                                                              |
+| 1.05 V   | 1.78 V  | The half switches itself off to protect the cells, unless it's on USB           |
 
-The module measures the voltage at the BMP Boost's battery pin, which the board's 1:3 voltage divider puts at a third of
-the input's, so the thresholds in the config are a third of the numbers above.
-
-**Not calibrated yet.** The table assumes one cell straight on the battery input, but the Ergo68 has two cells in
-series per half, so the input is about twice that (less the kit's diode and switch drop) and ZMK will show 100% until
-the thresholds are corrected. Until then the low-battery switch-off is disabled (`CONFIG_ZMK_NON_LIPO_LOW_MV=0`). A
-multimeter reading between the BMP Boost's `BT` and `G` pins, next to the cells' own voltage, gives the numbers to set
-them from.
+The two cells are in series and the battery kit's diode and switch drop about 0.32 V before the BMP Boost's `BT` input
+(measured on both halves: 2.59 V across the cells, 2.27 V at `BT`), hence the `BT` column. The module measures `BT`
+through the board's 1:3 voltage divider, so the thresholds in the config are a third of those. If the low-battery
+protection switches a half off, charge or replace its cells, or plug it into USB.
 
 **Sleep:** a half goes to sleep after 15 minutes without a key press, or after a minute of looking for a connection it
 doesn't get (the computer or the other half is off). A key press wakes it.
@@ -385,9 +381,9 @@ doesn't say whether it can also be powered through it. To try it safely:
 If the right half types, that's your fallback; leave the right battery switched off while it's powered over the cable.
 If it doesn't, the dependable fallback is a USB charger or power bank on the right half (or swapping in fresh cells).
 
-With ZMK, this clashes with its low-battery switch-off once that's calibrated and turned on. Powered over the cable,
-the right half isn't on USB and reads an empty or switched-off cell, so it would switch itself off at once. Keeping
-`CONFIG_ZMK_NON_LIPO_LOW_MV=0` in the shield's `bmp_boost.conf` avoids that, but then nothing protects the cells. A USB
+With ZMK, this clashes with its low-battery switch-off. Powered over the cable, the right half isn't on USB and reads
+an empty or switched-off cell, so it switches itself off at once. Setting `CONFIG_ZMK_NON_LIPO_LOW_MV=0` in the
+shield's `bmp_boost.conf` avoids that, but then nothing protects the cells. A USB
 charger on the right half works either way.
 
 ### The LEDs
