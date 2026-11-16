@@ -38,7 +38,6 @@ ergo68_promicro_target := "yushakobo/ergo68:" + keymap
 infinity_target := "input_club/ergodox_infinity:" + keymap
 ez_target := "ergodox_ez/" + ez_variant + ":" + keymap
 
-ergo68_uf2 := build_dir / "ergo68_ble_micro_pro.uf2"
 ergo68_hex := build_dir / "ergo68_pro_micro.hex"
 infinity_bin := build_dir / "ergodox_infinity.bin"
 ez_hex := build_dir / "ergodox_ez_" + ez_variant + ".hex"
@@ -51,11 +50,21 @@ default:
 # Build every QMK firmware into build/
 build: ergo68-bmp ergo68-promicro ergodox-infinity ergodox-ez
 
-# Ergo68 with BLE Micro Pros: build/ergo68_ble_micro_pro.uf2
-ergo68-bmp: _check-bmp-gcc (_fetch bmp_dir bmp_repo bmp_ref "lib/printf") (_install-keymap bmp_dir "ble_micro_pro" "ergo68") (_make bmp_dir ergo68_bmp_target)
-    @mkdir -p {{ quote(build_dir) }}
-    @cp {{ quote(bmp_dir / ".build" / "ble_micro_pro_" + keymap + ".uf2") }} {{ quote(ergo68_uf2) }}
-    @echo "Built {{ ergo68_uf2 }}"
+# Ergo68 with a BMP Boost in each half, hardware config built in: build/ergo68_{left,right}_ble_micro_pro.uf2
+ergo68-bmp: (_ergo68-bmp-half "left") (_ergo68-bmp-half "right")
+
+# Ergo68 with BLE Micro Pros, using the config the Web Configurator stored: build/ergo68_ble_micro_pro.uf2
+ergo68-bmp-stored: (_ergo68-bmp-half "")
+
+# Build the BLE Micro Pro firmware with HALF's config built in (left or right), or none ("")
+_ergo68-bmp-half half: _check-bmp-gcc (_fetch bmp_dir bmp_repo bmp_ref "lib/printf") (_install-keymap bmp_dir "ble_micro_pro" "ergo68")
+    #!/usr/bin/env bash
+    set -euo pipefail
+    {{ quote(just_executable()) }} -f {{ quote(justfile()) }} _make {{ quote(bmp_dir) }} {{ ergo68_bmp_target }} ERGO68_BMP_HALF={{ half }}
+    out={{ quote(build_dir / "ergo68_" + (if half == "" { "" } else { half + "_" }) + "ble_micro_pro.uf2") }}
+    mkdir -p {{ quote(build_dir) }}
+    cp {{ quote(bmp_dir / ".build" / "ble_micro_pro_" + keymap + ".uf2") }} "$out"
+    echo "Built $out"
 
 # Ergo68 with Pro Micros (the kit's controllers): build/ergo68_pro_micro.hex
 ergo68-promicro: (_fetch mainline_dir mainline_repo mainline_ref "lib/lufa" "lib/printf") (_install-keymap mainline_dir "yushakobo/ergo68" "ergo68") (_make mainline_dir ergo68_promicro_target)

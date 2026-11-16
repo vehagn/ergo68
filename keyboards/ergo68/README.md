@@ -11,7 +11,7 @@ for [BLE Micro Pros](https://github.com/sekigon-gonnoc/BLE-Micro-Pro) with QMK (
 |--------------------------------|---------------|---------------------------------------------------------|--------------------|-------------------------------|-------------------------------------------------------------------|
 | Wired (the kit's chips)        | Pro Micro     | Pro Micro                                               | TRS or TRRS cable  | USB                           | `ergo68_pro_micro.hex` on both halves                             |
 | Bluetooth in one half          | BLE Micro Pro | [LPME-IO](https://shop.yushakobo.jp/products/lpme-io2a) | 4-pole TRRS cable  | Bluetooth, or USB (left half) | `ergo68_ble_micro_pro.uf2` on the left half                       |
-| Bluetooth in both halves       | BLE Micro Pro | BLE Micro Pro                                           | Bluetooth          | Bluetooth, or USB (left half) | `ergo68_ble_micro_pro.uf2` on both halves                         |
+| Bluetooth in both halves       | BLE Micro Pro | BLE Micro Pro                                           | Bluetooth          | Bluetooth, or USB (left half) | `ergo68_left_ble_micro_pro.uf2` and `ergo68_right_ble_micro_pro.uf2` |
 | Bluetooth in both halves (ZMK) | BMP Boost     | BMP Boost                                               | Bluetooth          | Bluetooth, or USB (left half) | `ergo68_left-bmp_boost-zmk.uf2` and `ergo68_right-bmp_boost-zmk.uf2` |
 
 * The controllers sit in con-through sockets, so you switch setups by swapping them. Yushakobo's
@@ -141,8 +141,10 @@ row is the normal comma.
 
 ## Building
 
-`just ergo68-promicro` and `just ergo68-bmp` build the two QMK firmwares; `just build` builds them along with the
-ErgoDox ones. The ZMK firmware is built by CI only (see [ZMK](#bluetooth-with-zmk-bmp-boost) below); after changing
+`just ergo68-promicro` and `just ergo68-bmp` build the QMK firmwares; `just build` builds them along with the ErgoDox
+ones. `just ergo68-bmp` builds one file per half, with that half's hardware config built in (see
+[Setup](#setup-bootloader-and-config)); `just ergo68-bmp-stored` builds the single file that uses the config the Web
+Configurator stored instead, which the LPME-IO setup needs for now. The ZMK firmware is built by CI only (see [ZMK](#bluetooth-with-zmk-bmp-boost) below); after changing
 `keymap.c`, run `just ergo68-zmk-keymap` to update its keymap. CI fails if you forget.
 
 ## Wired: Pro Micro
@@ -169,11 +171,23 @@ firmware.
 
 ## Bluetooth: BLE Micro Pro with QMK
 
-### One-time setup with the Web Configurator
+### Setup: bootloader and config
 
-This installs the bootloader, the stock firmware and the Ergo68 config on the BMPs. You need Chrome or Edge (it uses Web
-Serial). The [BMP getting started guide](https://sekigon-gonnoc.github.io/BLE-Micro-Pro/#/getting_started) has
-screenshots of every step (in Japanese).
+The BMP firmware needs a bootloader and the Ergo68's hardware config (matrix, pins, which half, split or LPME-IO).
+
+* **Bluetooth in both halves:** the config is built into `ergo68_left_ble_micro_pro.uf2` and
+  `ergo68_right_ble_micro_pro.uf2` (`bmp_config.c`, with the values from sekigon-gonnoc's Ergo68 configs), so you only
+  need a bootloader. BMP Boosts come with one; if yours shows a `BLEMICROPRO` drive in bootloader mode, go straight to
+  [Flashing this firmware](#flashing-this-firmware). Any config stored on the BMP is ignored.
+* **Bluetooth in one half (LPME-IO):** the firmware still reads the config stored on the BMP, so set it up once with the
+  Web Configurator as below, and flash `ergo68_ble_micro_pro.uf2` (`just ergo68-bmp-stored`).
+
+The Web Configurator is still the tool for installing or updating the bootloader. A new bootloader is only needed if
+the firmware moves to another major.minor version of the BMP fork (see `bmp_ref` in the `justfile`).
+
+**With the Web Configurator.** This installs the bootloader, the stock firmware and the Ergo68 config. You need Chrome
+or Edge (it uses Web Serial). The [BMP getting started guide](https://sekigon-gonnoc.github.io/BLE-Micro-Pro/#/getting_started)
+has screenshots of every step (in Japanese).
 
 1. Open the [BLE Micro Pro Web Configurator](https://sekigon-gonnoc.github.io/BLE-Micro-Pro-WebConfigurator/) and start
    the guided setup. Select **ergo68**. For Bluetooth in one half, also tick *Use with LPME-IO*.
@@ -191,11 +205,13 @@ screenshots of every step (in Japanese).
    * with the keyboard on USB, press `Boot` (top-left key on the NUMPAD layer).
 
    The BMP shows up as a USB drive that contains `INFO_UF2.TXT`.
-2. Copy `ergo68_ble_micro_pro.uf2` onto the drive and wait for it to finish. Don't unplug it while it copies.
+2. Copy the firmware onto the drive and wait for it to finish; don't unplug it while it copies. Bluetooth in both
+   halves: `ergo68_left_ble_micro_pro.uf2` on the left half and `ergo68_right_ble_micro_pro.uf2` on the right. LPME-IO:
+   `ergo68_ble_micro_pro.uf2`.
 3. Unplug and replug. To check which build it runs, open the BMP's USB serial console (e.g. `screen /dev/ttyACM0` on
    Linux, TeraTerm on Windows) and run `version`; it shows the `stonegarden-<commit>` you just built.
-4. Bluetooth in both halves: do the same for the right BMP. Only the left half uses the keymap, but keeping both halves on
-   the same build avoids version mismatches between them.
+4. Bluetooth in both halves: do the same for the right BMP with its own file. Only the left half uses the keymap, but
+   keeping both halves on the same build avoids version mismatches between them.
 
 The keymap is part of the firmware but is kept in the BMP's (emulated) EEPROM so that Vial can edit it. The firmware
 reloads it from `keymap.c` on the first boot after you flash a changed keymap.
@@ -257,8 +273,7 @@ artifact from the run. It isn't built in the devcontainer.
 **Flashing:** the BMP Boost's bootloader takes ZMK's `.uf2` the same way as the QMK one. Put each half in bootloader
 mode (battery off, hold the reset switch while plugging in USB, or `Boot` on the NUMPAD layer) and copy
 `ergo68_left-bmp_boost-zmk.uf2` onto the left half's drive and `ergo68_right-bmp_boost-zmk.uf2` onto the right's. To
-go back to QMK, flash `ergo68_ble_micro_pro.uf2` again; if the keyboard doesn't come back up, redo the Web Configurator
-setup.
+go back to QMK, flash `ergo68_left_ble_micro_pro.uf2` and `ergo68_right_ble_micro_pro.uf2` again.
 
 **How the keys behave in ZMK:**
 
@@ -314,10 +329,9 @@ each other over Bluetooth, with the left half paired to your computer.
 reads the battery properly, sleeps and wakes by itself and was made for Bluetooth splits. QMK has live editing in
 Vial/Remap and works with the LPME-IO.
 
-* **QMK (BLE Micro Pro firmware):** in the Web Configurator, select **ergo68** *without* *Use with LPME-IO*. Rewrite the
-  left half's config with *Is Slave* unchecked and *Is Left* checked; it's currently set up for the LPME-IO. Then set
-  up the right BMP Boost (bootloader, firmware, config with *Is Slave* checked and *Is Left* unchecked). Finally flash
-  `ergo68_ble_micro_pro.uf2` onto both halves ([Flashing this firmware](#flashing-this-firmware)).
+* **QMK (BLE Micro Pro firmware):** flash `ergo68_left_ble_micro_pro.uf2` onto the left half and
+  `ergo68_right_ble_micro_pro.uf2` onto the right ([Flashing this firmware](#flashing-this-firmware)). The split config
+  is built in, so the left half's stored LPME-IO config doesn't matter and the Web Configurator isn't needed.
 * **ZMK:** flash `ergo68_left-bmp_boost-zmk.uf2` onto the left half and `ergo68_right-bmp_boost-zmk.uf2` onto the right
   ([Bluetooth with ZMK](#bluetooth-with-zmk-bmp-boost)). It doesn't use the Web Configurator's config.
 
