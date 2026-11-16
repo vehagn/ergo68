@@ -19,15 +19,16 @@
 // BMP Boost: measure the battery at the BT input (analog input AIN4, behind the board's 1:3
 // divider) instead of the BMP's default, which on a BMP Boost is its VCC output: that stays flat
 // while the cells run down, so Batt couldn't show low cells. Comment out BMP_BATTERY_AIN for an
-// original BLE Micro Pro. MIN/MAX are the range the battery percentage counts between, and below
-// MIN the BMP shuts the half down.
-// NOT CALIBRATED: it isn't known yet whether the BMP reports the BT voltage (about 2270 mV with
-// fresh cells) or the divided voltage at the pin (a third, about 756 mV). This range is safe for
-// both: the first reads 100%, the second about 78%, and neither is anywhere near MIN. Batt shows
-// which it is; then set the real range.
+// original BLE Micro Pro. The BMP reports the BT voltage itself (it accounts for the divider:
+// Batt read 2259/2238 mV with a multimeter showing 2.27 V at BT). MIN/MAX are the range the battery
+// percentage counts between, in BT millivolts, and below MIN the BMP shuts the half down. Two NiMH
+// cells in series, less the kit's 0.32 V diode and switch drop, as in the ZMK config:
+//   MAX 2280 mV = 1.30 V per cell: 100%
+//   MIN 1780 mV = 1.05 V per cell: 0%, and the half switches off to protect the cells
+// (1.10 V per cell, time to charge, is 1880 mV or about 20%.)
 #define BMP_BATTERY_AIN    4
-#define BMP_BATTERY_MIN_MV 600
-#define BMP_BATTERY_MAX_MV 800
+#define BMP_BATTERY_MIN_MV 1780
+#define BMP_BATTERY_MAX_MV 2280
 
 // BLE Micro Pro: put a half to sleep after this many minutes without a key press on it while on
 // battery, to save the cells (the Ergo68 config from the Web Configurator leaves auto-sleep off).

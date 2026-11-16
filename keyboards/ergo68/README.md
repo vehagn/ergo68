@@ -266,10 +266,10 @@ NiMH cells work fine. Things to know:
   So the kit's diode and switch drop about 0.32 V before the BMP Boost. `VCC` is the step-up converter's output: it
   follows the cells while they're above its set point and stays flat below it, so it can't show low cells. This
   firmware therefore points the measurement at `BT` (`BMP_BATTERY_AIN` in `config.h`; comment it out on an original
-  BLE Micro Pro). **Not calibrated yet:** with fresh cells `Batt` should now show either about 2270 mV (the `BT`
-  voltage) or about 756 mV (the voltage at the pin, a third of it, after the board's divider). Which one tells how to
-  set `BMP_BATTERY_MIN_MV`/`MAX_MV`, the range of the percentage and the voltage below which the BMP switches the half
-  off; until then they're set so that neither case can switch a half off. ZMK measures `BT` too.
+  BLE Micro Pro). `Batt` now shows the `BT` voltage (2259 and 2238 mV against 2.27 V on a multimeter). The battery
+  percentage the BMP reports to the computer runs from 100% at 2280 mV (1.30 V per cell) to 0% at 1780 mV (1.05 V per
+  cell), where the BMP switches the half off to protect the cells; at 1880 mV (1.10 V per cell, about 20%) it's time
+  to charge. ZMK measures `BT` too, but its 0% is at 1.10 V per cell.
 * **Use low-self-discharge cells** (Eneloop and similar). The keyboard draws so little that ordinary NiMH cells lose a
   noticeable part of their charge to self-discharge.
 * **The left half runs down first.** The BMP docs give about 300 µA for the half that talks to the computer and about
