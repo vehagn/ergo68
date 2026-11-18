@@ -181,6 +181,8 @@ Then connect the halves and plug the left half into the computer. If you'd rathe
 The wave really is simulated: `lcd_wave.c` solves the 2D wave equation with the usual explicit finite-difference scheme,
 in integers, 20 steps a second on a 256 x 32 grid (one cell per pixel, both LCDs).
 
+* **The drops** are smooth bumps let go at rest, so each spreads as a ring. (A bump that starts moving leaves a raised
+  wake inside the ring in 2D, and after reflecting off the top and bottom those wakes piled up into dark lobes.)
 * **The disks** (1 to 5, radius 2 to 4 pixels, at random places) are rigid: no flow into them (a Neumann boundary), so
   waves reflect off them as off a solid object.
 * **A corridor:** the top and bottom edges are rigid too, and the left and right ends absorb, with Mur's first-order

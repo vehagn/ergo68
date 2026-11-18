@@ -52,7 +52,7 @@ static uint32_t step_count, next_drop;
 #define WAVE_DAMPING 128  // lose 1/128 of the wave per step: a drop fades out in about 9 seconds
 #define WAVE_VISCOSITY 16 // viscosity nu = 1/16 (0: none; 1/4 is already unstable), see lcd_wave_step
 #define WAVE_CREST 450    // crests above this are solid, above 2/3 of it a checkerboard
-#define DROP_AMPLITUDE 8000 // strong enough to stay above WAVE_CREST as the waves spread
+#define DROP_AMPLITUDE 22000 // strong enough for the ring to stay above WAVE_CREST as it spreads
 #define DROP_MIN_STEPS 60   // between drops: 3 to 7 seconds at 20 steps a second
 #define DROP_MAX_STEPS 140
 
@@ -87,7 +87,13 @@ static void set_wall(int x, int y) {
     set_bit(near_wall, x, y + 1);
 }
 
-// A drop: a smooth bump (about a Gaussian, radius 2) added around (cx, cy).
+static int16_t clamp16(int32_t v) {
+    return v > INT16_MAX ? INT16_MAX : v < INT16_MIN ? INT16_MIN : (int16_t)v;
+}
+
+// A drop: a smooth bump (about a Gaussian, radius 2) raised around (cx, cy) and let go at rest, so it
+// spreads as a ring. (A bump that starts moving, added to u only, leaves a raised wake inside the
+// ring in 2D; after reflecting off the top and bottom, those wakes piled up into dark lobes.)
 static void drop(int cx, int cy) {
     static const uint8_t weights[5] = {35, 155, 255, 155, 35}; // exp(-d^2 / 2) * 255
     for (int dy = -2; dy <= 2; dy++) {
@@ -95,7 +101,9 @@ static void drop(int cx, int cy) {
             int x = cx + dx, y = cy + dy;
             if (x < 0 || x >= WAVE_W || y < 0 || y >= WAVE_H || is_wall(x, y)) continue;
             int32_t w = (int32_t)weights[dx + 2] * weights[dy + 2]; // up to 255 * 255
-            u[y][x] += (int16_t)(DROP_AMPLITUDE * w / (255 * 255));
+            int32_t h = DROP_AMPLITUDE * w / (255 * 255);
+            u[y][x]      = clamp16(u[y][x] + h);
+            u_prev[y][x] = clamp16(u_prev[y][x] + h); // the same a step earlier: at rest
         }
     }
 }
@@ -134,10 +142,6 @@ void lcd_wave_start(uint32_t seed) {
         }
     }
     random_drop();
-}
-
-static int16_t clamp16(int32_t v) {
-    return v > INT16_MAX ? INT16_MAX : v < INT16_MIN ? INT16_MIN : (int16_t)v;
 }
 
 // The previous step's heights of the rows just above and at the one being updated, as the update
