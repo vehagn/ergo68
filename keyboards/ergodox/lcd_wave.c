@@ -43,16 +43,17 @@
 
 static int16_t  wave_a[WAVE_H][WAVE_W], wave_b[WAVE_H][WAVE_W];
 static int16_t (*u)[WAVE_W] = wave_a, (*u_prev)[WAVE_W] = wave_b;
-static uint8_t  walls[WAVE_H][WAVE_W / 8]; // one bit per cell, set inside the disks
+static uint8_t  walls[WAVE_H][WAVE_W / 8];     // one bit per cell, set inside the disks
+static uint8_t  near_wall[WAVE_H][WAVE_W / 8]; // set on and next to the disks: cells that need checks
 static uint32_t rng;
-static uint16_t step_count, next_drop;
+static uint32_t step_count, next_drop;
 
 #define DISKS_MAX 5   // obstacles: 1 to 5 disks, radius 2 to 4
 #define WAVE_VISCOSITY 16 // viscosity nu = 1/16 (0: none; 1/4 is already unstable), see lcd_wave_step
 #define WAVE_CREST 450    // crests above this are solid, above 2/3 of it a checkerboard
 #define DROP_AMPLITUDE 8000 // strong enough to stay above WAVE_CREST as the waves spread
-#define DROP_MIN_STEPS 90   // between drops: 3 to 7 seconds at 30 steps a second
-#define DROP_MAX_STEPS 210
+#define DROP_MIN_STEPS 60   // between drops: 3 to 7 seconds at 20 steps a second
+#define DROP_MAX_STEPS 140
 
 static uint32_t random32(void) { // xorshift32
     rng ^= rng << 13;
@@ -69,10 +70,20 @@ static bool is_wall(int x, int y) {
     return walls[y][x >> 3] & (1 << (x & 7));
 }
 
-static void set_wall(int x, int y) {
+static void set_bit(uint8_t (*bits)[WAVE_W / 8], int x, int y) {
     if (x >= 0 && x < WAVE_W && y >= 0 && y < WAVE_H) {
-        walls[y][x >> 3] |= 1 << (x & 7);
+        bits[y][x >> 3] |= 1 << (x & 7);
     }
+}
+
+static void set_wall(int x, int y) {
+    set_bit(walls, x, y);
+    // The cell and its four neighbours need the slow path in lcd_wave_step.
+    set_bit(near_wall, x, y);
+    set_bit(near_wall, x - 1, y);
+    set_bit(near_wall, x + 1, y);
+    set_bit(near_wall, x, y - 1);
+    set_bit(near_wall, x, y + 1);
 }
 
 // A drop: a smooth bump (about a Gaussian, radius 2) added around (cx, cy).
@@ -99,6 +110,7 @@ void lcd_wave_start(uint32_t seed) {
     memset(wave_a, 0, sizeof(wave_a));
     memset(wave_b, 0, sizeof(wave_b));
     memset(walls, 0, sizeof(walls));
+    memset(near_wall, 0, sizeof(near_wall));
     u = wave_a, u_prev = wave_b;
     step_count = 0;
 
@@ -133,27 +145,36 @@ static int16_t old_above[WAVE_W], old_here[WAVE_W];
 
 void lcd_wave_step(void) {
     // The inside of the grid. A disk's cells count as the cell's own value (no flow into the disk);
-    // the disks keep away from the edges, so the edge cells needn't be checked.
+    // the disks keep away from the edges, so the edge cells needn't be checked. Cells away from the
+    // disks, nearly all of them, take a fast path without the checks.
     memcpy(old_above, u_prev[0], sizeof(old_above));
     for (int y = 1; y < WAVE_H - 1; y++) {
         memcpy(old_here, u_prev[y], sizeof(old_here));
+        const int16_t *above = u[y - 1], *row = u[y], *below = u[y + 1], *old_below = u_prev[y + 1];
         for (int x = 1; x < WAVE_W - 1; x++) {
-            if (is_wall(x, y)) {
+            int32_t here = row[x], next;
+            if (!(near_wall[y][x >> 3] & (1 << (x & 7)))) {
+                next = (above[x] + below[x] + row[x - 1] + row[x + 1]) / 4 + here - old_here[x];
+#if WAVE_VISCOSITY > 0
+                // Viscosity: nu * laplacian of the velocity (u - u_prev). Like air, it damps short
+                // wavelengths much more than long ones, so the grid's pixel-scale ripples die out
+                // while the wavefronts carry on.
+                int32_t lap_v = (above[x] - old_above[x]) + (below[x] - old_below[x]) + (row[x - 1] - old_here[x - 1]) + (row[x + 1] - old_here[x + 1]) - 4 * (here - old_here[x]);
+                next += lap_v / WAVE_VISCOSITY;
+#endif
+            } else if (is_wall(x, y)) {
                 u_prev[y][x] = 0;
                 continue;
-            }
-            bool    n = !is_wall(x, y - 1), s = !is_wall(x, y + 1), w = !is_wall(x - 1, y), e = !is_wall(x + 1, y);
-            int32_t here = u[y][x];
-            int32_t sum  = (n ? u[y - 1][x] : here) + (s ? u[y + 1][x] : here) + (w ? u[y][x - 1] : here) + (e ? u[y][x + 1] : here);
-            int32_t next = sum / 4 + here - old_here[x];
+            } else {
+                // Next to a disk: its cells count as this cell's own value.
+                bool n = !is_wall(x, y - 1), s = !is_wall(x, y + 1), w = !is_wall(x - 1, y), e = !is_wall(x + 1, y);
+                next = ((n ? above[x] : here) + (s ? below[x] : here) + (w ? row[x - 1] : here) + (e ? row[x + 1] : here)) / 4 + here - old_here[x];
 #if WAVE_VISCOSITY > 0
-            // Viscosity: nu * laplacian of the velocity (u - u_prev). Like air, it damps short
-            // wavelengths much more than long ones, so the grid's pixel-scale ripples die out while
-            // the wavefronts carry on.
-            int32_t v     = here - old_here[x];
-            int32_t lap_v = (n ? u[y - 1][x] - old_above[x] : v) + (s ? u[y + 1][x] - u_prev[y + 1][x] : v) + (w ? u[y][x - 1] - old_here[x - 1] : v) + (e ? u[y][x + 1] - old_here[x + 1] : v) - 4 * v;
-            next += lap_v / WAVE_VISCOSITY;
+                int32_t v     = here - old_here[x];
+                int32_t lap_v = (n ? above[x] - old_above[x] : v) + (s ? below[x] - old_below[x] : v) + (w ? row[x - 1] - old_here[x - 1] : v) + (e ? row[x + 1] - old_here[x + 1] : v) - 4 * v;
+                next += lap_v / WAVE_VISCOSITY;
 #endif
+            }
             next -= next / 1024; // a trace of damping, for what integer rounding leaves behind
             u_prev[y][x] = clamp16(next); // u_prev isn't needed any more, so it takes the new step
         }
@@ -177,28 +198,27 @@ void lcd_wave_step(void) {
     }
 }
 
-uint16_t lcd_wave_steps(void) {
+uint32_t lcd_wave_steps(void) {
     return step_count;
 }
 
 void lcd_draw_wave(uint8_t half) {
-    // Crests dark, troughs and calm water light. (A 16-level dither made the low ripples show up as
-    // scattered dots; two levels give soft edges and clean calm water.)
-    st7565_clear();
+    // Crests dark, troughs and calm water light: crests above WAVE_CREST solid, a band below them as
+    // a checkerboard, for soft edges without the scattered dots a finer dither made of the faint
+    // ripples. Written a byte (8 rows of a column) at a time, as the LCD stores them.
     const int x0 = half * LCD_WIDTH;
-    for (int y = 0; y < LCD_HEIGHT; y++) {
+    for (int page = 0; page < LCD_HEIGHT / 8; page++) {
         for (int x = 0; x < LCD_WIDTH; x++) {
-            int gx = x0 + x;
-            if (is_wall(gx, y)) {
-                st7565_write_pixel(x, y, true);
-                continue;
+            int     gx   = x0 + x;
+            uint8_t byte = 0;
+            for (int bit = 0; bit < 8; bit++) {
+                int     y = page * 8 + bit;
+                int16_t h = u[y][gx];
+                if (is_wall(gx, y) || h > WAVE_CREST || (h > WAVE_CREST * 2 / 3 && ((gx + y) & 1) == 0)) {
+                    byte |= 1 << bit;
+                }
             }
-            // Crests above WAVE_CREST solid, a band below them as a checkerboard: soft edges without
-            // the scattered dots a finer dither made of the faint ripples.
-            int16_t h = u[y][gx];
-            if (h > WAVE_CREST || (h > WAVE_CREST * 2 / 3 && ((gx + y) & 1) == 0)) {
-                st7565_write_pixel(x, y, true);
-            }
+            st7565_write_raw_byte(byte, page * LCD_WIDTH + x);
         }
     }
 }

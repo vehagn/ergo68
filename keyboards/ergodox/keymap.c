@@ -210,7 +210,8 @@ static const layer_style_t layer_styles[] = {
 #    define LCD_IDLE_MS 30000       // without key presses before the idle animation starts
 #    define LCD_IDLE_FRAME_MS 250   // per frame of the zen garden (shown until the wave starts)
 #    define LCD_IDLE_DIM_MS 2000    // how long the backlight takes to dim when idle
-#    define LCD_WAVE_STEP_MS 33     // per step of the wave simulation: 30 steps a second
+#    define LCD_WAVE_STEP_MS 50     // per step of the wave simulation: 20 steps a second
+#    define LCD_WAVE_BUDGET_MS 20   // at most this long stepping per frame, so the LCD and keys keep up
 
 // Backlight colour, 0-255 per channel, shown at the half brightness QMK uses for these LCDs.
 static uint8_t  lcd_rgb[3], fade_from[3], fade_to[3];
@@ -263,8 +264,7 @@ static uint8_t  shown_layer = UINT8_MAX, shown_indicators;
  * transport's thread, so it only stores it here; its main loop starts the wave.
  */
 static bool              wave_running;
-static uint32_t          wave_start;
-static uint16_t          wave_drawn;
+static uint32_t          wave_start, wave_drawn;
 static volatile bool     wave_seed_received;
 static volatile uint32_t wave_seed;
 
@@ -279,18 +279,29 @@ static void wave_begin(uint32_t seed) {
     lcd_wave_start(seed);
     wave_running = true;
     wave_start   = timer_read32();
-    wave_drawn   = UINT16_MAX;
+    wave_drawn   = UINT32_MAX;
+}
+
+// QMK's ST7565 driver sends one 32 x 8 block per main-loop pass, after st7565_task_user. A frame
+// that redraws everything and takes longer than ST7565_UPDATE_INTERVAL would have the next one start
+// before the rest is sent, leaving only the first block (top left) updating, so send it all now.
+static void lcd_send_frame(void) {
+    for (int i = 0; i < ST7565_BLOCK_COUNT; i++) {
+        st7565_render();
+    }
 }
 
 static void wave_task(void) {
-    // Catch up with the clock, a few steps at a time so the keyboard stays responsive.
+    // Catch up with the clock, but not for longer than LCD_WAVE_BUDGET_MS in one frame.
     uint32_t target = timer_elapsed32(wave_start) / LCD_WAVE_STEP_MS;
-    for (int i = 0; i < 4 && lcd_wave_steps() < target; i++) {
+    uint16_t begun  = timer_read();
+    while (lcd_wave_steps() < target && timer_elapsed(begun) < LCD_WAVE_BUDGET_MS) {
         lcd_wave_step();
     }
     if (lcd_wave_steps() != wave_drawn) {
         wave_drawn = lcd_wave_steps();
         lcd_draw_wave(is_keyboard_left() ? 0 : 1);
+        lcd_send_frame();
     }
 }
 
@@ -328,6 +339,9 @@ void st7565_task_user(void) {
     // they start the animation together and keep roughly the same frame.
     uint32_t quiet = last_input_activity_elapsed();
     if (quiet >= LCD_IDLE_MS) {
+        if (!st7565_is_on()) {
+            return; // timed out: QMK still calls this, but there's nothing to animate for
+        }
         if (!idle) {
             idle = true;
             lcd_fade_to_layer(LCD_IDLE_DIM_MS, true);
@@ -349,6 +363,7 @@ void st7565_task_user(void) {
             if (frame != idle_frame) {
                 idle_frame = frame;
                 lcd_draw_idle(is_keyboard_left() ? 0 : 1, frame);
+                lcd_send_frame();
             }
         }
         return;

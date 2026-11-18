@@ -5,8 +5,9 @@
 #include <stdint.h>
 
 /*
- * ErgoDox Infinity LCD screens (128 x 32). The drawing only uses st7565_clear() and
- * st7565_write_pixel(), so scripts/lcd_preview.c can render the same code to images.
+ * ErgoDox Infinity LCD screens (128 x 32). The drawing only uses st7565_clear(),
+ * st7565_write_pixel() and st7565_write_raw_byte(), so scripts/lcd_preview can render the same code
+ * to images.
  */
 
 #define LCD_WIDTH 128
@@ -35,7 +36,7 @@ void lcd_draw_idle(uint8_t half, uint16_t frame);
 // it, then draw a half.
 void     lcd_wave_start(uint32_t seed);
 void     lcd_wave_step(void);
-uint16_t lcd_wave_steps(void);
+uint32_t lcd_wave_steps(void);
 void     lcd_draw_wave(uint8_t half);
 
 // Start-up and suspend screens.

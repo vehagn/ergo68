@@ -6,3 +6,4 @@
 
 void st7565_clear(void);
 void st7565_write_pixel(uint8_t x, uint8_t y, bool on);
+void st7565_write_raw_byte(const char data, uint16_t index);

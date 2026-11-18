@@ -179,7 +179,7 @@ Then connect the halves and plug the left half into the computer. If you'd rathe
 ![The sound wave across both LCDs](lcd_wave.gif)
 
 The wave really is simulated: `lcd_wave.c` solves the 2D wave equation with the usual explicit finite-difference scheme,
-in integers, 30 steps a second on a 256 x 32 grid (one cell per pixel, both LCDs).
+in integers, 20 steps a second on a 256 x 32 grid (one cell per pixel, both LCDs).
 
 * **The disks** (1 to 5, radius 2 to 4 pixels, at random places) are rigid: no flow into them (a Neumann boundary), so
   waves reflect off them as off a solid object.

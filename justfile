@@ -160,7 +160,7 @@ ergodox-lcd-preview:
     gcc -std=c11 -Wall -Wextra -Werror -I scripts/lcd_preview -I keyboards/ergodox -o "$tmp/preview" \
         scripts/lcd_preview/preview.c keyboards/ergodox/lcd.c keyboards/ergodox/lcd_wave.c
     "$tmp/preview" | python3 scripts/lcd_preview/render.py keyboards/ergodox/lcd_preview.png
-    "$tmp/preview" wave | python3 scripts/lcd_preview/render.py keyboards/ergodox/lcd_wave.gif 66
+    "$tmp/preview" wave | python3 scripts/lcd_preview/render.py keyboards/ergodox/lcd_wave.gif 100
 
 # Check that zmk-config/ergo68.keymap is up to date with keyboards/ergo68/keymap.c
 check-zmk-keymap:

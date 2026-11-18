@@ -23,6 +23,11 @@ void st7565_write_pixel(uint8_t x, uint8_t y, bool on) {
     pixels[y][x] = on;
 }
 
+// As the LCD stores them: byte `index` is column index % 128 of rows 8 * (index / 128) to + 7.
+void st7565_write_raw_byte(const char data, uint16_t index) {
+    for (int bit = 0; bit < 8; bit++) pixels[index / LCD_WIDTH * 8 + bit][index % LCD_WIDTH] = (data >> bit) & 1;
+}
+
 static void dump(const char *name, unsigned rgb) {
     printf("%s %06x %d\n", name, rgb, LCD_WIDTH);
     for (int y = 0; y < LCD_HEIGHT; y++) {
@@ -49,7 +54,7 @@ int main(int argc, char **argv) {
     const unsigned white = 0xffffff, blue = 0x0087ff, purple = 0x7400ff, green = 0x20ff00, dim = 0x808080;
 
     if (argc > 1 && strcmp(argv[1], "wave") == 0) {
-        // Both LCDs side by side, every other step for 8 seconds at 30 steps a second.
+        // Both LCDs side by side, every other step for 12 seconds at 20 steps a second.
         static unsigned char both[LCD_HEIGHT][2 * LCD_WIDTH];
         lcd_wave_start(1); // a seed that places five disks
         for (int frame = 0; frame < 120; frame++) {
@@ -57,7 +62,7 @@ int main(int argc, char **argv) {
                 lcd_draw_wave(half);
                 for (int y = 0; y < LCD_HEIGHT; y++) memcpy(&both[y][half * LCD_WIDTH], pixels[y], LCD_WIDTH);
             }
-            printf("Wave, step %u %06x %d\n", lcd_wave_steps(), 0x808080, 2 * LCD_WIDTH);
+            printf("Wave, step %u %06x %d\n", (unsigned)lcd_wave_steps(), 0x808080, 2 * LCD_WIDTH);
             for (int y = 0; y < LCD_HEIGHT; y++) {
                 for (int x = 0; x < 2 * LCD_WIDTH; x++) putchar('0' + both[y][x]);
                 putchar('\n');
@@ -97,7 +102,7 @@ int main(int argc, char **argv) {
     {
         static unsigned char both[LCD_HEIGHT][2 * LCD_WIDTH];
         lcd_wave_start(1); // a seed that places five disks
-        for (int i = 0; i < 70; i++) lcd_wave_step();
+        for (int i = 0; i < 50; i++) lcd_wave_step();
         for (int half = 0; half < 2; half++) {
             lcd_draw_wave(half);
             for (int y = 0; y < LCD_HEIGHT; y++) memcpy(&both[y][half * LCD_WIDTH], pixels[y], LCD_WIDTH);
