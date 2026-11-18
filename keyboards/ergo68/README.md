@@ -39,6 +39,7 @@ Four layers, ported from a Vial layout:
   layer. Holding `;` gives FUNC momentarily.
 * Blank keys fall through to the base layer, and `·` keys do nothing.
 * The left half of FUNC has Bluetooth controls in the BMP and ZMK firmware, and RGB controls in the Pro Micro firmware.
+* The [ErgoDox](../ergodox/README.md) has the same layers wherever the two keyboards have the same keys.
 
 ### BASE
 
@@ -80,7 +81,8 @@ it there, `\` or `<` on others. `RAlt` doubles as the Compose key with the XKB o
 ### FUNC, BLE Micro Pro and ZMK firmware (tap FUNC or hold `;`)
 
 `Host1`–`Host5` switch between paired hosts, `Pair` advertises to a new host, `BLE`/`USB` choose where key presses go,
-`Batt` types the battery voltage, `Sleep` puts the keyboard in deep sleep.
+`Batt` types the battery voltage, `Sleep` puts the keyboard in deep sleep. `Boot` (bottom corners) starts the
+bootloader; see [Flashing this firmware](#flashing-this-firmware).
 
 These keys are all on the left half, and so is the `FUNC` key on the base layer (inner column, middle row). Use that
 one to reach them: tap `FUNC`, press the key, then tap `BASE` (same spot) to go back. This README writes it as
@@ -89,7 +91,7 @@ to the left: not when the halves haven't found each other, or the right half is 
 
 ```
 .------.------.------.------.------.------.                .------.------.------.------.------.------.
-|      |  F1  |  F2  |  F3  |  F4  |  F5  |                |  F6  |  F7  |  F8  |  F9  | F10  | F11  |
+|Sleep |  F1  |  F2  |  F3  |  F4  |  F5  |                |  F6  |  F7  |  F8  |  F9  | F10  | F11  |
 |------+------+------+------+------+------+------.  .------+------+------+------+------+------+------|
 |      |Host1 |Host2 |Host3 |Host4 |Host5 |      |  |      | Ins  |ScrLk |PrtSc |Pause |      | F12  |
 |------+------+------+------+------+------+------|  |------+------+------+------+------+------+------|
@@ -97,7 +99,7 @@ to the left: not when the halves haven't found each other, or the right half is 
 |------+------+------+------+------+------+------|  |------+------+------+------+------+------+------|
 |      |      |      |      |      |      |      |  |      | Rew  | Mute |      |  FF  |      | Stop |
 |------+------+------+------+------+------+------|  |------+------+------+------+------+------+------|
-|Sleep |      |      |      |      |      |      |  |      |      |      |      |      |      |      |
+| Boot |      |      |      |      |      |      |  |      |      |      |      |      |      | Boot |
 '------'------'------'------'------|      |      |  |      |      |------'------'------'------'------'
                                    '------'------'  '------'------'
 ```
@@ -116,7 +118,7 @@ to the left: not when the halves haven't found each other, or the right half is 
 |------+------+------+------+------+------+------|  |------+------+------+------+------+------+------|
 | Bri- | Off  |      |      |      |      |      |  |      | Rew  | Mute |      |  FF  |      | Stop |
 |------+------+------+------+------+------+------|  |------+------+------+------+------+------+------|
-|      |      |      |      |      |  On  | Off  |  |      |      |      |      |      |      |      |
+| Boot |      |      |      |      |  On  | Off  |  |      |      |      |      |      |      | Boot |
 '------'------'------'------'------|      |      |  |      |      |------'------'------'------'------'
                                    '------'------'  '------'------'
 ```
@@ -128,7 +130,7 @@ Lock and Scroll Lock. On the right they show which of NAV (purple), FUNC (orange
 
 ```
 .------.------.------.------.------.------.                .------.------.------.------.------.------.
-| Boot |      |      |      |      |      |                |      |NumLk |  /   |  *   |  -   | Boot |
+| Boot |      |      |      |      |      |                |      |NumLk |  /   |  *   |  -   |      |
 |------+------+------+------+------+------+------.  .------+------+------+------+------+------+------|
 |Reboot|      |      |      |      |      |      |  |      |      |  7   |  8   |  9   |  +   |      |
 |------+------+------+------+------+------+------|  |------+------+------+------+------+------+------|
@@ -170,7 +172,8 @@ works too. On Linux with avrdude installed, `just flash-ergo68-promicro` waits f
 flashes `build/ergo68_pro_micro.hex` (give the serial port as `just flash-ergo68-promicro /dev/ttyACM1` if it isn't
 `/dev/ttyACM0`).
 
-Once the firmware is on, `Boot` (top-left key on the NUMPAD layer) also starts the bootloader. Connect
+Once the firmware is on, `Boot` (the bottom corners of the FUNC layer, or top-left on NUMPAD) also starts the
+bootloader. Connect
 the halves with the TRS/TRRS cable and plug the left half into the computer.
 [Remap's configure page](https://remap-keys.app/configure) can then edit the keymap live, as with Yushakobo's own
 firmware.
@@ -208,8 +211,9 @@ has screenshots of every step (in Japanese).
 
 1. Put the BMP in bootloader mode, either:
    * switch the battery off, then hold the reset switch on the PCB while plugging in USB, or
-   * with the keyboard on USB, press `Boot` (top corner keys on the NUMPAD layer). In QMK only the left half runs the
-     keymap, so either `Boot` puts the left half in bootloader mode; the right half needs the reset switch.
+   * with the keyboard on USB, press `Boot` (`FUNC`, then a bottom corner key; or top-left on NUMPAD). In QMK only the
+     left half runs the keymap, so any `Boot` puts the left half in bootloader mode; the right half needs the reset
+     switch.
 
    The BMP shows up as a USB drive that contains `INFO_UF2.TXT`.
 2. Copy the firmware onto the drive and wait for it to finish; don't unplug it while it copies. Bluetooth in both
@@ -275,7 +279,7 @@ NiMH cells work fine. Things to know:
   noticeable part of their charge to self-discharge.
 * **The left half runs down first.** The BMP docs give about 300 µA for the half that talks to the computer and about
   100 µA for the other half.
-* **Switch off with the slide switch** when you're not using the keyboard, or press `Sleep` (`FUNC`, left Ctrl).
+* **Switch off with the slide switch** when you're not using the keyboard, or press `Sleep` (`FUNC`, top-left key).
 
 Auto-sleep is off in the Ergo68 config from the Web Configurator, so this firmware turns it on: on battery, a half goes
 to sleep after 30 minutes without a key press (`BMP_AUTO_SLEEP_MINUTES` in `config.h`; comment it out to turn it off).
@@ -296,8 +300,8 @@ firmwares have the same layers.
 push also builds them on GitHub with ZMK's own build workflow (artifact `ergo68-zmk-firmware`).
 
 **Flashing:** the BMP Boost's bootloader takes ZMK's `.uf2` the same way as the QMK one. Put each half in bootloader
-mode (battery off, hold the reset switch while plugging in USB, or `Boot` on the NUMPAD layer: ZMK runs it on the half
-where it's pressed, so the top-left key does the left half and the top-right key the right half) and copy
+mode (battery off, hold the reset switch while plugging in USB, or `Boot` on the FUNC layer: ZMK runs it on the half
+where it's pressed, so the bottom-left key does the left half and the bottom-right key the right half) and copy
 `ergo68_left-bmp_boost-zmk.uf2` onto the left half's drive and `ergo68_right-bmp_boost-zmk.uf2` onto the right's. To
 go back to QMK, flash `ergo68_left_ble_micro_pro.uf2` and `ergo68_right_ble_micro_pro.uf2` again.
 

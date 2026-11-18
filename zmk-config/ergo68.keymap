@@ -38,18 +38,18 @@
         func {
             display-name = "FUNC";
             bindings = <
-                &trans           &kp F1           &kp F2           &kp F3           &kp F4           &kp F5           &kp F6           &kp F7           &kp F8           &kp F9           &kp F10          &kp F11
+                &none            &kp F1           &kp F2           &kp F3           &kp F4           &kp F5           &kp F6           &kp F7           &kp F8           &kp F9           &kp F10          &kp F11
                 &trans           &bt BT_SEL 0     &bt BT_SEL 1     &bt BT_SEL 2     &bt BT_SEL 3     &bt BT_SEL 4     &trans           &trans           &kp INS          &kp SLCK         &kp PSCRN        &kp PAUSE_BREAK  &trans           &kp F12
                 &trans           &bt BT_CLR       &out OUT_BLE     &out OUT_USB     &none            &trans           &to 0            &to 0            &kp C_PREV       &kp C_VOL_DN     &kp C_VOL_UP     &kp C_NEXT       &trans           &kp C_PP
                 &trans           &trans           &trans           &trans           &trans           &trans           &trans           &trans           &kp C_RW         &kp C_MUTE       &trans           &kp C_FF         &trans           &kp C_STOP
-                &none            &trans           &trans           &trans           &trans           &trans           &trans           &trans           &trans           &trans           &trans           &trans           &trans           &trans
+                &bootloader      &trans           &trans           &trans           &trans           &trans           &trans           &trans           &trans           &trans           &trans           &trans           &trans           &bootloader
             >;
         };
 
         numpad {
             display-name = "NUMPAD";
             bindings = <
-                &bootloader      &trans           &trans           &trans           &trans           &trans           &trans           &kp KP_NUM       &kp KP_SLASH     &kp KP_MULTIPLY  &kp KP_MINUS     &bootloader
+                &bootloader      &trans           &trans           &trans           &trans           &trans           &trans           &kp KP_NUM       &kp KP_SLASH     &kp KP_MULTIPLY  &kp KP_MINUS     &trans
                 &sys_reset       &trans           &trans           &trans           &trans           &trans           &trans           &trans           &trans           &kp KP_N7        &kp KP_N8        &kp KP_N9        &kp KP_PLUS      &trans
                 &none            &trans           &trans           &trans           &trans           &trans           &to 0            &to 0            &trans           &kp KP_N4        &kp KP_N5        &kp KP_N6        &kp KP_COMMA     &trans
                 &trans           &trans           &trans           &trans           &trans           &trans           &trans           &trans           &trans           &kp KP_N1        &kp KP_N2        &kp KP_N3        &kp KP_EQUAL     &trans

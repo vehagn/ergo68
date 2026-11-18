@@ -66,34 +66,33 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     /* FUNC (BLE Micro Pro): F-keys and media, with wireless controls on the left.
      * Host1-5 = switch to the n-th paired host, Pair = advertise to a new host (and look for the
      * other half), BLE/USB = where key presses go, Batt = type the battery voltage, Sleep = deep sleep.
-     * Keep the F-keys and the right half the same as in the Pro Micro version below.
+     * Boot in both bottom corners: ZMK runs it on the half where it's pressed, so each half can get into
+     * bootloader mode; keyboards/ergodox has it in the same places. Keep the F-keys, Boot and the right
+     * half the same as in the Pro Micro version below.
      */
     [_FUNC] = LAYOUT_ergo68(
-        _______, KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,                               KC_F6,   KC_F7,   KC_F8,   KC_F9,   KC_F10,  KC_F11,
+        ENT_SLP, KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,                               KC_F6,   KC_F7,   KC_F8,   KC_F9,   KC_F10,  KC_F11,
         _______, ADV_ID1, ADV_ID2, ADV_ID3, ADV_ID4, ADV_ID5, _______,          _______, KC_INS,  KC_SCRL, KC_PSCR, KC_PAUS, _______, KC_F12,
         _______, AD_WO_L, SEL_BLE, SEL_USB, BATT_LV, _______, L_BASE,           L_BASE,  KC_MPRV, KC_VOLD, KC_VOLU, KC_MNXT, _______, KC_MPLY,
         _______, _______, _______, _______, _______, _______, _______,          _______, KC_MRWD, KC_MUTE, _______, KC_MFFD, _______, KC_MSTP,
-        ENT_SLP, _______, _______, _______, _______, _______, _______,          _______, _______, _______, _______, _______, _______, _______
+        QK_BOOT, _______, _______, _______, _______, _______, _______,          _______, _______, _______, _______, _______, _______, QK_BOOT
     ),
 #else
     /* FUNC (Pro Micro): F-keys and media, with RGB lighting controls on the left.
-     * Keep the F-keys and the right half the same as in the BLE Micro Pro version above.
+     * Keep the F-keys, Boot and the right half the same as in the BLE Micro Pro version above.
      */
     [_FUNC] = LAYOUT_ergo68(
         RM_SATU, KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,                               KC_F6,   KC_F7,   KC_F8,   KC_F9,   KC_F10,  KC_F11,
         RM_SATD, RM_NEXT, _______, _______, _______, _______, _______,          _______, KC_INS,  KC_SCRL, KC_PSCR, KC_PAUS, _______, KC_F12,
         RM_VALU, RM_TOGG, RM_NEXT, RM_PREV, RM_HUEU, RM_HUED, L_BASE,           L_BASE,  KC_MPRV, KC_VOLD, KC_VOLU, KC_MNXT, _______, KC_MPLY,
         RM_VALD, RM_OFF,  _______, _______, _______, _______, _______,          _______, KC_MRWD, KC_MUTE, _______, KC_MFFD, _______, KC_MSTP,
-        _______, _______, _______, _______, _______, RM_ON,   RM_OFF,           _______, _______, _______, _______, _______, _______, _______
+        QK_BOOT, _______, _______, _______, _______, RM_ON,   RM_OFF,           _______, _______, _______, _______, _______, _______, QK_BOOT
     ),
 #endif
 
-    /* NUMPAD: numpad on the right, Boot, Reboot and EEPROM clear on the left. Keep QK_BOOT in both top
-     * corners: with ZMK, Boot puts the half it's pressed on into bootloader mode, so the right half needs
-     * its own (with QMK both reset the left half, which runs the keymap).
-     */
+    /* NUMPAD: numpad on the right, Boot, Reboot and EEPROM clear on the left */
     [_NUMPAD] = LAYOUT_ergo68(
-        QK_BOOT, _______, _______, _______, _______, _______,                             _______, KC_NUM,  KC_PSLS, KC_PAST, KC_PMNS, QK_BOOT,
+        QK_BOOT, _______, _______, _______, _______, _______,                             _______, KC_NUM,  KC_PSLS, KC_PAST, KC_PMNS, _______,
         QK_RBT,  _______, _______, _______, _______, _______, _______,          _______, _______, KC_P7,   KC_P8,   KC_P9,   KC_PPLS, _______,
         EE_CLR,  _______, _______, _______, _______, _______, L_BASE,          L_BASE,  _______, KC_P4,   KC_P5,   KC_P6,   KC_PCMM, _______,
         _______, _______, _______, _______, _______, _______, _______,          _______, _______, KC_P1,   KC_P2,   KC_P3,   KC_PEQL, _______,
