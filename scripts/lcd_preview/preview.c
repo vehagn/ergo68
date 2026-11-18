@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
     if (argc > 1 && strcmp(argv[1], "wave") == 0) {
         // Both LCDs side by side, every other step for 8 seconds at 30 steps a second.
         static unsigned char both[LCD_HEIGHT][2 * LCD_WIDTH];
-        lcd_wave_start(12345);
+        lcd_wave_start(1); // a seed that places five disks
         for (int frame = 0; frame < 120; frame++) {
             for (int half = 0; half < 2; half++) {
                 lcd_draw_wave(half);
@@ -96,7 +96,7 @@ int main(int argc, char **argv) {
     // The wave a couple of seconds in, across both LCDs.
     {
         static unsigned char both[LCD_HEIGHT][2 * LCD_WIDTH];
-        lcd_wave_start(12345);
+        lcd_wave_start(1); // a seed that places five disks
         for (int i = 0; i < 70; i++) lcd_wave_step();
         for (int half = 0; half < 2; half++) {
             lcd_draw_wave(half);
