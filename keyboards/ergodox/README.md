@@ -171,7 +171,8 @@ Then connect the halves and plug the left half into the computer. If you'd rathe
 * **The backlight** takes the layer's colour: white for BASE, blue for NAV, purple for FUNC, green for NUMPAD. It fades
   between colours, fades in behind the *stonegarden* start-up screen, and fades out on *Suspending...*.
 * **When idle** (30 seconds without a key press on either half), both LCDs together show a simulated sound wave: drops
-  fall at random, and their waves spread, scatter off up to five small disks and leave through the edges. The
+  fall at random, and their waves spread, scatter off up to five small disks, bounce between the top and bottom and
+  leave at the far ends. The
   backlight dims to a quarter, and the next key press brings everything back. After 5 minutes without key presses the
   LCDs turn off.
 
@@ -182,10 +183,12 @@ in integers, 30 steps a second on a 256 x 32 grid (one cell per pixel, both LCDs
 
 * **The disks** (1 to 5, radius 2 to 4 pixels, at random places) are rigid: no flow into them (a Neumann boundary), so
   waves reflect off them as off a solid object.
-* **The edges absorb**, with Mur's first-order absorbing boundary condition: each edge cell is set as if the wave
-  carried on past it. Measured on this grid, it lets out all but 1% of a pulse's energy within 15 seconds; reflecting
-  edges kept 57%, and a few cells of graded damping in front of the edges (a cheap stand-in for a perfectly matched
-  layer) did worse than Mur alone. A trace of damping clears what integer rounding leaves.
+* **A corridor:** the top and bottom edges are rigid too, and the left and right ends absorb, with Mur's first-order
+  absorbing boundary condition: each end cell is set as if the wave carried on past it. Measured on this grid, a drop's
+  waves stay visible for about 13 seconds this way. With all four edges absorbing they were gone within a second or
+  two, since the top and bottom are never more than 16 pixels away. (Mur's condition lets out all but 1% of a pulse's
+  energy within 15 seconds where it's used; a few cells of graded damping in front of the edges, a cheap stand-in for
+  a perfectly matched layer, did worse than Mur alone.) A trace of damping clears what integer rounding leaves.
 
 Each half simulates the whole grid; the half on USB picks the random seed (disks and drops) and sends it to the other
 over the cable, and the integer maths gives both exactly the same wave. If the seed doesn't arrive, that half shows a

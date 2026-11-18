@@ -9,16 +9,20 @@
  *     u_next = u + (u_north + u_south + u_east + u_west) / 4 - u_prev
  *
  * in 16-bit integers. Up to five small disks at random places are rigid obstacles (a Neumann
- * boundary: no flow into them), so the wave reflects off them as off a solid object. The screen
- * edges absorb instead, with Mur's first-order absorbing boundary condition (ABC):
+ * boundary: no flow into them), so the wave reflects off them as off a solid object.
+ *
+ * The two LCDs make a corridor: the top and bottom edges are rigid too, so waves bounce between them
+ * and travel along the strip, and the left and right ends absorb, with Mur's first-order absorbing
+ * boundary condition (ABC):
  *
  *     u_next(edge) = u(inner) + (c dt - dx) / (c dt + dx) * (u_next(inner) - u(edge)),  factor -1/3
  *
- * which lets a wave leave as if the field went on. It's exact head-on and less so at grazing angles,
- * but measured on this grid it lets out all but 1% of a pulse's energy within 15 seconds (reflecting
- * edges kept 57%; a few cells of graded damping in front of the edges, a cheap PML, did worse than
- * Mur alone). A trace of damping clears the integer rounding that's left. Random drops start new
- * waves now and then.
+ * which lets a wave leave as if the field went on. Measured on this grid, a drop stays visible for
+ * about 13 seconds this way; with all four edges absorbing it was gone within one or two, as the top
+ * and bottom are never more than 16 pixels from a drop. (Mur on all edges let out all but 1% of the
+ * energy within 15 seconds, reflecting edges kept 57%, and a few cells of graded damping in front of
+ * the edges, a cheap PML, did worse than Mur alone.) A trace of damping clears the integer rounding
+ * that's left. Random drops start new waves now and then.
  *
  * Each half simulates the whole field, so they need no data from each other while it runs: the
  * integer maths is exact and the same on both, so they only have to start from the same random
@@ -41,9 +45,9 @@ static uint16_t step_count, next_drop;
 
 #define DISKS_MAX 5   // obstacles: 1 to 5 disks, radius 2 to 4
 #define WAVE_CALM 240 // heights below this aren't drawn, so small ripples don't speckle the screen
-#define DROP_AMPLITUDE 3200
-#define DROP_MIN_STEPS 45  // between drops: 1.5 to 4 seconds at 30 steps a second
-#define DROP_MAX_STEPS 120
+#define DROP_AMPLITUDE 8000 // strong enough to stay above WAVE_CALM as the waves spread
+#define DROP_MIN_STEPS 90   // between drops: 3 to 7 seconds at 30 steps a second
+#define DROP_MAX_STEPS 210
 
 static uint32_t random32(void) { // xorshift32
     rng ^= rng << 13;
@@ -134,14 +138,15 @@ void lcd_wave_step(void) {
             u_prev[y][x] = clamp16(next); // u_prev isn't needed any more, so it takes the new step
         }
     }
-    // The edges: Mur's absorbing boundary, from the new values just inside them.
+    // The ends absorb (Mur's boundary, from the new values just inside them)...
     for (int y = 1; y < WAVE_H - 1; y++) {
         u_prev[y][0]          = clamp16(u[y][1] - (u_prev[y][1] - u[y][0]) / 3);
         u_prev[y][WAVE_W - 1] = clamp16(u[y][WAVE_W - 2] - (u_prev[y][WAVE_W - 2] - u[y][WAVE_W - 1]) / 3);
     }
+    // ...and the top and bottom are rigid: no flow through them.
     for (int x = 0; x < WAVE_W; x++) {
-        u_prev[0][x]          = clamp16(u[1][x] - (u_prev[1][x] - u[0][x]) / 3);
-        u_prev[WAVE_H - 1][x] = clamp16(u[WAVE_H - 2][x] - (u_prev[WAVE_H - 2][x] - u[WAVE_H - 1][x]) / 3);
+        u_prev[0][x]          = u_prev[1][x];
+        u_prev[WAVE_H - 1][x] = u_prev[WAVE_H - 2][x];
     }
     int16_t (*t)[WAVE_W] = u;
     u = u_prev, u_prev = t;
@@ -167,7 +172,7 @@ void lcd_draw_wave(uint8_t half) {
                 st7565_write_pixel(x, y, true);
                 continue;
             }
-            int level = (u[y][gx] - WAVE_CALM) / 32; // calm water stays blank, then 16 shades
+            int level = (u[y][gx] - WAVE_CALM) / 80; // calm water stays blank, then 16 shades
             if (level > bayer[y & 3][gx & 3]) {
                 st7565_write_pixel(x, y, true);
             }
