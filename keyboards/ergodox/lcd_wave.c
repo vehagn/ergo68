@@ -48,8 +48,8 @@ static uint32_t rng;
 static uint16_t step_count, next_drop;
 
 #define DISKS_MAX 5   // obstacles: 1 to 5 disks, radius 2 to 4
-#define WAVE_VISCOSITY 8  // viscosity nu = 1/8 (0: none; 1/4 is already unstable), see lcd_wave_step
-#define WAVE_CREST 450    // crests higher than this are drawn; the rest stays blank
+#define WAVE_VISCOSITY 16 // viscosity nu = 1/16 (0: none; 1/4 is already unstable), see lcd_wave_step
+#define WAVE_CREST 450    // crests above this are solid, above 2/3 of it a checkerboard
 #define DROP_AMPLITUDE 8000 // strong enough to stay above WAVE_CREST as the waves spread
 #define DROP_MIN_STEPS 90   // between drops: 3 to 7 seconds at 30 steps a second
 #define DROP_MAX_STEPS 210
@@ -182,8 +182,8 @@ uint16_t lcd_wave_steps(void) {
 }
 
 void lcd_draw_wave(uint8_t half) {
-    // Crests dark, troughs and calm water light. (Shading the crests with a dither pattern made the
-    // low ripples show up as scattered dots; a plain threshold draws clean wavefronts.)
+    // Crests dark, troughs and calm water light. (A 16-level dither made the low ripples show up as
+    // scattered dots; two levels give soft edges and clean calm water.)
     st7565_clear();
     const int x0 = half * LCD_WIDTH;
     for (int y = 0; y < LCD_HEIGHT; y++) {
@@ -193,7 +193,10 @@ void lcd_draw_wave(uint8_t half) {
                 st7565_write_pixel(x, y, true);
                 continue;
             }
-            if (u[y][gx] > WAVE_CREST) {
+            // Crests above WAVE_CREST solid, a band below them as a checkerboard: soft edges without
+            // the scattered dots a finer dither made of the faint ripples.
+            int16_t h = u[y][gx];
+            if (h > WAVE_CREST || (h > WAVE_CREST * 2 / 3 && ((gx + y) & 1) == 0)) {
                 st7565_write_pixel(x, y, true);
             }
         }
