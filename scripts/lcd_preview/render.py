@@ -56,7 +56,8 @@ def main():
             img = Image.new("RGB", (width, H * SCALE + 2 * MARGIN), (40, 40, 40))
             draw_screen(ImageDraw.Draw(img), MARGIN, MARGIN, rgb, w, rows)
             frames.append(img)
-        frames[0].save(out, save_all=True, append_images=frames[1:], duration=250, loop=0)
+        duration = int(sys.argv[2]) if len(sys.argv) > 2 else 250  # ms per frame
+        frames[0].save(out, save_all=True, append_images=frames[1:], duration=duration, loop=0)
     else:
         font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 13)
         width = max(lcd_width(w) for _, _, w, _ in screens) + 2 * MARGIN

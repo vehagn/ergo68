@@ -183,10 +183,11 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  * ErgoDox Infinity LCDs (the drawing is in lcd.c, the fonts in lcd_font.h). Both halves show the
  * active layer's name and a badge for each active lock and modifier. As with the old visualizer,
  * the backlight takes the layer's colour and fades between colours, there's a start-up screen, and
- * it says it's suspending. After a while without key presses, both LCDs play a zen stone garden
- * animation together, with the backlight dimmed.
+ * it says it's suspending. After a while without key presses, both LCDs show a simulated sound
+ * wave together (lcd_wave.c), with the backlight dimmed.
  */
 #    include "lcd.h"
+#    include "transactions.h"
 
 typedef struct {
     const char *name;
@@ -207,8 +208,9 @@ static const layer_style_t layer_styles[] = {
 #    define LCD_FADE_OUT_MS 1000    // when suspending or timing out
 #    define LCD_SPLASH_MS 2000      // how long the start-up screen stays
 #    define LCD_IDLE_MS 30000       // without key presses before the idle animation starts
-#    define LCD_IDLE_FRAME_MS 250   // per frame of the idle animation
+#    define LCD_IDLE_FRAME_MS 250   // per frame of the zen garden (shown until the wave starts)
 #    define LCD_IDLE_DIM_MS 2000    // how long the backlight takes to dim when idle
+#    define LCD_WAVE_STEP_MS 33     // per step of the wave simulation: 30 steps a second
 
 // Backlight colour, 0-255 per channel, shown at the half brightness QMK uses for these LCDs.
 static uint8_t  lcd_rgb[3], fade_from[3], fade_to[3];
@@ -255,11 +257,49 @@ static bool     splash = true, redraw = true, idle;
 static uint16_t splash_start, idle_frame = UINT16_MAX;
 static uint8_t  shown_layer = UINT8_MAX, shown_indicators;
 
+/*
+ * The wave starts from a random seed that the half on USB picks when the keyboard goes idle and
+ * sends to the other half, so both simulate the same wave. The other half receives it in the split
+ * transport's thread, so it only stores it here; its main loop starts the wave.
+ */
+static bool              wave_running;
+static uint32_t          wave_start;
+static uint16_t          wave_drawn;
+static volatile bool     wave_seed_received;
+static volatile uint32_t wave_seed;
+
+static void wave_seed_handler(uint8_t in_len, const void *in_data, uint8_t out_len, void *out_data) {
+    if (in_len == sizeof(uint32_t)) {
+        memcpy((void *)&wave_seed, in_data, sizeof(uint32_t));
+        wave_seed_received = true;
+    }
+}
+
+static void wave_begin(uint32_t seed) {
+    lcd_wave_start(seed);
+    wave_running = true;
+    wave_start   = timer_read32();
+    wave_drawn   = UINT16_MAX;
+}
+
+static void wave_task(void) {
+    // Catch up with the clock, a few steps at a time so the keyboard stays responsive.
+    uint32_t target = timer_elapsed32(wave_start) / LCD_WAVE_STEP_MS;
+    for (int i = 0; i < 4 && lcd_wave_steps() < target; i++) {
+        lcd_wave_step();
+    }
+    if (lcd_wave_steps() != wave_drawn) {
+        wave_drawn = lcd_wave_steps();
+        lcd_draw_wave(is_keyboard_left() ? 0 : 1);
+    }
+}
+
 void keyboard_post_init_user(void) {
     lcd_apply_colour(); // dark, then fade in behind the start-up screen
     lcd_fade_to(255, 255, 255, LCD_FADE_IN_MS);
     splash_start = timer_read();
     lcd_draw_splash();
+    transaction_register_rpc(USER_LCD_WAVE_SEED, wave_seed_handler);
 }
 
 void st7565_on_user(void) {
@@ -291,18 +331,34 @@ void st7565_task_user(void) {
         if (!idle) {
             idle = true;
             lcd_fade_to_layer(LCD_IDLE_DIM_MS, true);
+            if (is_keyboard_master()) {
+                uint32_t seed = timer_read32() * 2654435761u + shown_indicators + 1;
+                wave_begin(seed);
+                transaction_rpc_send(USER_LCD_WAVE_SEED, sizeof(seed), &seed);
+            }
         }
-        uint16_t frame = (quiet - LCD_IDLE_MS) / LCD_IDLE_FRAME_MS;
-        if (frame != idle_frame) {
-            idle_frame = frame;
-            lcd_draw_idle(is_keyboard_left() ? 0 : 1, frame);
+        if (!is_keyboard_master() && wave_seed_received) {
+            wave_seed_received = false;
+            wave_begin(wave_seed);
+        }
+        if (wave_running) {
+            wave_task();
+        } else {
+            // Until the seed arrives from the other half (it normally does at once): the zen garden.
+            uint16_t frame = (quiet - LCD_IDLE_MS) / LCD_IDLE_FRAME_MS;
+            if (frame != idle_frame) {
+                idle_frame = frame;
+                lcd_draw_idle(is_keyboard_left() ? 0 : 1, frame);
+            }
         }
         return;
     }
     if (idle) {
-        idle       = false;
-        idle_frame = UINT16_MAX;
-        redraw     = true;
+        idle               = false;
+        wave_running       = false;
+        wave_seed_received = false;
+        idle_frame         = UINT16_MAX;
+        redraw             = true;
         lcd_fade_to_layer(LCD_FADE_MS, false);
     }
 

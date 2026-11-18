@@ -3,8 +3,9 @@
  * scripts/lcd_preview/render.py. Prints each screen as "name rrggbb width" followed by 32 rows of 0/1.
  * The layer names and colours are the ones in keyboards/ergodox/keymap.c.
  *
- *   preview        every screen, with the idle animation's first frame across both LCDs
- *   preview idle   the idle animation, one full cycle across both LCDs
+ *   preview        every screen, with the idle animations across both LCDs
+ *   preview wave   the sound wave, 8 seconds of it across both LCDs
+ *   preview idle   the zen garden, one full cycle across both LCDs
  */
 #include <stdio.h>
 #include <string.h>
@@ -47,6 +48,26 @@ static void dump_idle(const char *name, unsigned rgb, uint16_t frame) {
 int main(int argc, char **argv) {
     const unsigned white = 0xffffff, blue = 0x0087ff, purple = 0x7400ff, green = 0x20ff00, dim = 0x808080;
 
+    if (argc > 1 && strcmp(argv[1], "wave") == 0) {
+        // Both LCDs side by side, every other step for 8 seconds at 30 steps a second.
+        static unsigned char both[LCD_HEIGHT][2 * LCD_WIDTH];
+        lcd_wave_start(12345);
+        for (int frame = 0; frame < 120; frame++) {
+            for (int half = 0; half < 2; half++) {
+                lcd_draw_wave(half);
+                for (int y = 0; y < LCD_HEIGHT; y++) memcpy(&both[y][half * LCD_WIDTH], pixels[y], LCD_WIDTH);
+            }
+            printf("Wave, step %u %06x %d\n", lcd_wave_steps(), 0x808080, 2 * LCD_WIDTH);
+            for (int y = 0; y < LCD_HEIGHT; y++) {
+                for (int x = 0; x < 2 * LCD_WIDTH; x++) putchar('0' + both[y][x]);
+                putchar('\n');
+            }
+            lcd_wave_step();
+            lcd_wave_step();
+        }
+        return 0;
+    }
+
     if (argc > 1 && strcmp(argv[1], "idle") == 0) {
         for (uint16_t frame = 0; frame < 4; frame++) {
             char name[32];
@@ -72,7 +93,22 @@ int main(int argc, char **argv) {
     lcd_draw_layer_screen("Function keys", LCD_CAPS | LCD_NUM | LCD_SCROLL | LCD_SHIFT | LCD_CTRL | LCD_ALT | LCD_GUI);
     dump("Everything on at once (shorter labels)", purple);
 
-    dump_idle("Idle, across both LCDs (dimmed backlight)", dim, 0);
+    // The wave a couple of seconds in, across both LCDs.
+    {
+        static unsigned char both[LCD_HEIGHT][2 * LCD_WIDTH];
+        lcd_wave_start(12345);
+        for (int i = 0; i < 70; i++) lcd_wave_step();
+        for (int half = 0; half < 2; half++) {
+            lcd_draw_wave(half);
+            for (int y = 0; y < LCD_HEIGHT; y++) memcpy(&both[y][half * LCD_WIDTH], pixels[y], LCD_WIDTH);
+        }
+        printf("%s %06x %d\n", "Idle: the sound wave, across both LCDs (dimmed backlight)", dim, 2 * LCD_WIDTH);
+        for (int y = 0; y < LCD_HEIGHT; y++) {
+            for (int x = 0; x < 2 * LCD_WIDTH; x++) putchar('0' + both[y][x]);
+            putchar('\n');
+        }
+    }
+    dump_idle("Idle, until the wave's seed arrives from the other half: the zen garden", dim, 0);
 
     lcd_draw_suspending();
     dump("Suspending", white);

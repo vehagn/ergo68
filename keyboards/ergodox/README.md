@@ -170,20 +170,27 @@ Then connect the halves and plug the left half into the computer. If you'd rathe
   labels get shorter.
 * **The backlight** takes the layer's colour: white for BASE, blue for NAV, purple for FUNC, green for NUMPAD. It fades
   between colours, fades in behind the *stonegarden* start-up screen, and fades out on *Suspending...*.
-* **When idle** (30 seconds without a key press on either half), both LCDs together show a zen stone garden: raked
-  sand, four stones, and rings that slowly ripple outward. The backlight dims to a quarter, and the next key press
-  brings everything back. After 5 minutes without key presses the LCDs turn off.
+* **When idle** (30 seconds without a key press on either half), both LCDs together show a simulated sound wave: drops
+  fall at random, and their waves spread, reflect off a few random short walls and the edges, and interfere. The
+  backlight dims to a quarter, and the next key press brings everything back. After 5 minutes without key presses the
+  LCDs turn off.
 
-![The idle animation across both LCDs](lcd_idle.gif)
+![The sound wave across both LCDs](lcd_wave.gif)
 
-The timings are at the top of the LCD code in `keymap.c` (`LCD_IDLE_MS` and the fades) and in `config.h`
-(`ST7565_TIMEOUT`, when the LCDs turn off).
+The wave really is simulated: `lcd_wave.c` solves the 2D wave equation with the usual explicit finite-difference scheme,
+in integers, 30 steps a second on a 256 x 32 grid (one cell per pixel, both LCDs). The walls hold the wave at zero, so
+it reflects off them. Each half simulates the whole grid; the half on USB picks the random seed (walls and drops) and
+sends it to the other over the cable, and the integer maths gives both exactly the same wave. If the seed doesn't
+arrive, that half shows a zen stone garden instead.
+
+The timings are at the top of the LCD code in `keymap.c` (`LCD_IDLE_MS`, `LCD_WAVE_STEP_MS` and the fades) and in
+`config.h` (`ST7565_TIMEOUT`, when the LCDs turn off); the wave's walls, drops and damping are at the top of
+`lcd_wave.c`.
 
 The text is DejaVu Sans Mono, monospaced, rendered without anti-aliasing: bold at 12 px for the big line and 8 px for
 the badges. `lcd_font.h` is generated from the font by `just ergodox-lcd-font` (`scripts/lcd_font.py`), and the drawing is
 in `lcd.c`. `just ergodox-lcd-preview` compiles that same `lcd.c` on your machine and renders every screen to
-`lcd_preview.png` and the idle animation to `lcd_idle.gif` (the pictures above), so you can see a change before you
-flash it.
+`lcd_preview.png` and the wave to `lcd_wave.gif` (the pictures above), so you can see a change before you flash it.
 
 ## ErgoDox EZ
 

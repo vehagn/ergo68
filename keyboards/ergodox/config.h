@@ -12,3 +12,6 @@
 #define SPLIT_MODS_ENABLE
 #define SPLIT_ACTIVITY_ENABLE
 #define ST7565_TIMEOUT 300000
+
+// ErgoDox Infinity idle animation: the half on USB sends the other the wave's random seed.
+#define SPLIT_TRANSACTION_IDS_USER USER_LCD_WAVE_SEED
