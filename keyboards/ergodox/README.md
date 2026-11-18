@@ -27,9 +27,23 @@ microcontroller, so these are QMK only.
 Build with `just ergodox-infinity`, which gives `build/ergodox_infinity.bin`. Each half is flashed separately with
 the same file:
 
-1. Connect one half with USB and press its program button (on the back, above the thumb cluster).
-2. Run `just flash-ergodox-infinity` on your own machine (it uses dfu-util, which may need `sudo` or a udev rule).
+1. Run `just flash-ergodox-infinity` on your own machine (it uses dfu-util, which may need `sudo` or a udev rule). It
+   waits for a half in bootloader mode.
+2. Put the half that's plugged into USB in bootloader mode, see below.
 3. Do the same for the other half.
+
+**Bootloader mode without the program button.** The program button is on the back (above the thumb cluster), behind
+the case. With this firmware already on the keyboard, a key does the same for the half that's plugged into USB:
+
+* **Left half** (normal use, USB in the left half): tap `MEDIA` (left half, inner column, second row) and press the
+  top-left key. Holding `;` and pressing the top-left key works too.
+* **Right half:** plug USB into the right half instead. The half on USB always acts as the left half, and on the
+  Infinity every key has the same matrix position as its mirror image on the other half, so the right half's keys now
+  do what their left-hand mirror images do. Tap the right half's inner-column key in the second row (normally `NUMPD`,
+  now `MEDIA`), then press its top-right key. This only uses the right half, so it works with the halves disconnected.
+
+Keymap changes only need the left half flashed: the half on USB runs the keymap, the other only reports its key
+presses. After a QMK update, flash both halves so their split protocol matches.
 
 Then connect the halves and plug the left half into the computer. If you'd rather be able to plug in either half, add
 `#define EE_HANDS` to `config.h` and set each half's side once as described in QMK's
