@@ -180,53 +180,167 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 #ifdef ST7565_ENABLE
 /*
- * ErgoDox Infinity LCDs: show the active layer's name and Caps/Num/Scroll Lock, and colour the
- * backlight by layer, with the names and colours from the old ergodox_stonegarden visualizer.
+ * ErgoDox Infinity LCDs (the drawing is in lcd.c, the fonts in lcd_font.h). The half on USB shows
+ * the active layer's name and a badge for each active lock and modifier; the other half shows the
+ * typing speed with a graph of the last minute. As with the old visualizer, the backlight takes the
+ * layer's colour and fades between colours, there's a start-up screen, and it says it's suspending.
  */
+#    include "lcd.h"
+
 typedef struct {
     const char *name;
     uint8_t     r, g, b;
 } layer_style_t;
 
-// The visualizer's colours were hue/saturation 0/0, 148/255, 80/255 and 190/255; these are the same in RGB,
-// since the Infinity's QMK build has no HSV conversion (that comes with RGB lighting, which it doesn't have).
+// The old visualizer's colours (hue/saturation 0/0, 148/255, 80/255 and 190/255), in RGB, since the
+// Infinity's QMK build has no HSV conversion (that comes with RGB lighting, which it doesn't have).
 static const layer_style_t layer_styles[] = {
     [_BASE]   = {"Ergodox Infinity", 255, 255, 255}, // white
-    [_NAV]    = {"Mouse + Navigation", 0, 135, 255}, // blue
+    [_NAV]    = {"Mouse + Nav", 0, 135, 255},        // blue
     [_FUNC]   = {"Function keys", 116, 0, 255},      // purple
     [_NUMPAD] = {"Numpad", 32, 255, 0},              // green
 };
 
-static uint8_t lcd_layer = UINT8_MAX; // not shown yet
+#    define LCD_FADE_MS 250         // between layer colours
+#    define LCD_FADE_IN_MS 800      // at start-up and when the LCD comes back on
+#    define LCD_FADE_OUT_MS 1000    // when suspending or timing out
+#    define LCD_SPLASH_MS 2000      // how long the start-up screen stays
+#    define LCD_WPM_SAMPLE_MS 500   // one graph column per half second: about a minute in all
 
-static void lcd_show_layer_colour(uint8_t layer) {
-    // Half brightness, like QMK's default for these LCDs.
-    const layer_style_t *style = &layer_styles[layer];
-    ergodox_infinity_lcd_color(style->r * 128, style->g * 128, style->b * 128);
+// Backlight colour, 0-255 per channel, shown at the half brightness QMK uses for these LCDs.
+static uint8_t  lcd_rgb[3], fade_from[3], fade_to[3];
+static uint16_t fade_start, fade_ms;
+static bool     fading;
+
+static void lcd_apply_colour(void) {
+    ergodox_infinity_lcd_color(lcd_rgb[0] * 128, lcd_rgb[1] * 128, lcd_rgb[2] * 128);
+}
+
+static void lcd_fade_to(uint8_t r, uint8_t g, uint8_t b, uint16_t ms) {
+    memcpy(fade_from, lcd_rgb, 3);
+    fade_to[0] = r, fade_to[1] = g, fade_to[2] = b;
+    fade_start = timer_read();
+    fade_ms    = ms;
+    fading     = true;
+}
+
+static void lcd_fade_task(void) {
+    if (!fading) {
+        return;
+    }
+    uint16_t elapsed = timer_elapsed(fade_start);
+    for (int i = 0; i < 3; i++) {
+        lcd_rgb[i] = elapsed >= fade_ms ? fade_to[i] : fade_from[i] + (int32_t)(fade_to[i] - fade_from[i]) * elapsed / fade_ms;
+    }
+    fading = elapsed < fade_ms;
+    lcd_apply_colour();
+}
+
+static uint8_t lcd_layer(void) {
+    uint8_t layer = get_highest_layer(layer_state | default_layer_state);
+    return layer < ARRAY_SIZE(layer_styles) ? layer : _BASE;
+}
+
+static void lcd_fade_to_layer(uint16_t ms) {
+    const layer_style_t *style = &layer_styles[lcd_layer()];
+    lcd_fade_to(style->r, style->g, style->b, ms);
+}
+
+static bool     splash = true, redraw = true;
+static uint16_t splash_start;
+static uint8_t  shown_layer = UINT8_MAX, shown_indicators, shown_wpm;
+
+#    ifdef WPM_ENABLE
+static uint8_t  wpm_history[LCD_WPM_HISTORY], wpm_count;
+static uint16_t wpm_sample_timer;
+#    endif
+
+void keyboard_post_init_user(void) {
+    lcd_apply_colour(); // dark, then fade in behind the start-up screen
+    lcd_fade_to(255, 255, 255, LCD_FADE_IN_MS);
+    splash_start = timer_read();
+    lcd_draw_splash();
 }
 
 void st7565_on_user(void) {
-    lcd_show_layer_colour(lcd_layer < ARRAY_SIZE(layer_styles) ? lcd_layer : _BASE);
+    lcd_fade_to_layer(LCD_FADE_IN_MS);
+}
+
+void st7565_off_user(void) {
+    lcd_fade_to(0, 0, 0, LCD_FADE_OUT_MS);
+}
+
+void housekeeping_task_user(void) {
+    lcd_fade_task();
+#    ifdef WPM_ENABLE
+    if (!is_keyboard_master() && timer_elapsed(wpm_sample_timer) >= LCD_WPM_SAMPLE_MS) {
+        wpm_sample_timer = timer_read();
+        if (wpm_count == LCD_WPM_HISTORY) {
+            memmove(wpm_history, wpm_history + 1, LCD_WPM_HISTORY - 1);
+            wpm_count--;
+        }
+        wpm_history[wpm_count++] = get_current_wpm();
+        redraw                   = true;
+    }
+#    endif
 }
 
 void st7565_task_user(void) {
-    uint8_t layer = get_highest_layer(layer_state | default_layer_state);
-    if (layer >= ARRAY_SIZE(layer_styles)) {
-        layer = _BASE;
-    }
-    if (layer != lcd_layer) {
-        lcd_layer = layer;
-        lcd_show_layer_colour(layer);
+    if (splash) {
+        if (timer_elapsed(splash_start) < LCD_SPLASH_MS) {
+            return;
+        }
+        splash = false;
+        redraw = true;
+        lcd_fade_to_layer(LCD_FADE_MS);
     }
 
-    led_t host = host_keyboard_led_state();
-    st7565_set_cursor(0, 0);
-    st7565_write_ln(layer_styles[layer].name, false);
-    st7565_write(host.caps_lock ? "Caps " : "     ", false);
-    st7565_write(host.num_lock ? "Num " : "    ", false);
-    st7565_write_ln(host.scroll_lock ? "Scroll" : "", false);
-    st7565_write_ln("", false);
-    st7565_write_ln("", false);
+    uint8_t layer = lcd_layer();
+    if (layer != shown_layer) {
+        if (shown_layer != UINT8_MAX) {
+            lcd_fade_to_layer(LCD_FADE_MS);
+        }
+        shown_layer = layer;
+        redraw      = true;
+    }
+
+    if (is_keyboard_master()) {
+        led_t   host       = host_keyboard_led_state();
+        uint8_t mods       = get_mods() | get_oneshot_mods();
+        uint8_t indicators = (host.caps_lock ? LCD_CAPS : 0) | (host.num_lock ? LCD_NUM : 0) | (host.scroll_lock ? LCD_SCROLL : 0) | (mods & MOD_MASK_SHIFT ? LCD_SHIFT : 0) | (mods & MOD_MASK_CTRL ? LCD_CTRL : 0) | (mods & MOD_MASK_ALT ? LCD_ALT : 0) | (mods & MOD_MASK_GUI ? LCD_GUI : 0);
+        if (redraw || indicators != shown_indicators) {
+            shown_indicators = indicators;
+            lcd_draw_layer_screen(layer_styles[layer].name, indicators);
+        }
+    } else {
+#    ifdef WPM_ENABLE
+        uint8_t wpm = get_current_wpm();
+        if (redraw || wpm != shown_wpm) {
+            shown_wpm = wpm;
+            lcd_draw_wpm_screen(wpm, wpm_history, wpm_count);
+        }
+#    endif
+    }
+    redraw = false;
+}
+
+static bool suspended;
+
+void suspend_power_down_user(void) {
+    // Called over and over while the computer sleeps, with the rest of the firmware stopped.
+    if (!suspended) {
+        suspended = true;
+        lcd_draw_suspending();
+        st7565_render();
+        lcd_fade_to(0, 0, 0, LCD_FADE_OUT_MS);
+    }
+    lcd_fade_task();
+}
+
+void suspend_wakeup_init_user(void) {
+    suspended = false;
+    redraw    = true;
+    lcd_fade_to_layer(LCD_FADE_IN_MS);
 }
 #endif
 

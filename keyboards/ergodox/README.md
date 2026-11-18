@@ -122,10 +122,11 @@ nothing). On the plain EZ they do nothing. `NKRO` switches n-key rollover on and
   (F-keys, media and lighting) and NUMPAD. The old MEDIA layer is gone; its media and lighting keys are on FUNC and the
   mouse keys on NAV. Old keycode names are updated (`RESET` → `QK_BOOT`, `EEP_RST` → `EE_CLR`, mouse keys → `MS_*`,
   `MAGIC_TOGGLE_NKRO` → `NK_TOGG`).
-* **The LCDs (Infinity).** QMK's old LCD "visualizer" no longer exists; the LCDs now use QMK's ST7565 driver. As
-  before, they show the active layer's name (*Ergodox Infinity*, *Mouse + Navigation*, *Function keys*, *Numpad*) and
-  their backlight takes the layer's colour, with the old visualizer's colours. The second line shows Caps, Num and Scroll Lock. Both
-  halves show it.
+* **The LCDs (Infinity).** QMK's old LCD "visualizer" no longer exists; the LCDs now use QMK's ST7565 driver, drawn
+  by this keymap ([The LCDs](#the-lcds)). As before, the half on USB shows the active layer's name in a bold font, the
+  backlight takes the layer's colour (the old visualizer's colours) and fades between colours, and there's a start-up
+  screen and a *Suspending...* screen. New: badges for active locks and modifiers, and the typing speed on the other
+  half.
 * **Lighting keys on FUNC.** The old RGB and backlight keys now control whatever lighting the board has: the per-key
   backlight on the Infinity (on/off, effect, brightness, speed), RGB matrix on the EZ Glow, RGB underglow on the EZ Shine.
   On the plain EZ they do nothing. The RGB mode keys (plain, breathing, rainbow, …) are gone.
@@ -160,6 +161,23 @@ presses. After a QMK update, flash both halves so their split protocol matches.
 Then connect the halves and plug the left half into the computer. If you'd rather be able to plug in either half, add
 `#define EE_HANDS` to `config.h` and set each half's side once as described in QMK's
 [ErgoDox Infinity readme](https://github.com/qmk/qmk_firmware/tree/master/keyboards/input_club/ergodox_infinity).
+
+### The LCDs
+
+![Every LCD screen](lcd_preview.png)
+
+* **The half on USB** shows the active layer's name, centred, and below it a badge for each active lock (Caps, Num,
+  Scroll) and modifier (Shift, Ctrl, Alt, GUI). Holding `C+A` shows Ctrl and Alt, for example. If they don't all fit,
+  the labels get shorter.
+* **The other half** shows the typing speed in words per minute, with a graph of the last minute.
+* **The backlight** takes the layer's colour: white for BASE, blue for NAV, purple for FUNC, green for NUMPAD. It fades
+  between colours, fades in behind the *stonegarden* start-up screen, and fades out on *Suspending...* and when the
+  LCDs turn off after a minute without key presses.
+
+The text is DejaVu Sans Mono, monospaced, rendered without anti-aliasing: bold at 12 px for the big line and 8 px for
+the badges. `lcd_font.h` is generated from the font by `just ergodox-lcd-font` (`scripts/lcd_font.py`), and the drawing is
+in `lcd.c`. `just ergodox-lcd-preview` compiles that same `lcd.c` on your machine and renders every screen to
+`lcd_preview.png` (the picture above), so you can see a change before you flash it.
 
 ## ErgoDox EZ
 

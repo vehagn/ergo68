@@ -141,6 +141,26 @@ _zmk-workspace:
     # Registers this Zephyr with CMake (in ~/.cmake, so again after a container rebuild).
     (cd "$ws" && west zephyr-export >/dev/null)
 
+# Regenerate the ErgoDox Infinity's LCD fonts (keyboards/ergodox/lcd_font.h) from DejaVu Sans Mono
+ergodox-lcd-font:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    tmp="$(mktemp)"
+    python3 {{ quote(root / "scripts/lcd_font.py") }} > "$tmp"
+    mv "$tmp" {{ quote(root / "keyboards/ergodox/lcd_font.h") }}
+    echo "Wrote keyboards/ergodox/lcd_font.h"
+
+# Render every ErgoDox Infinity LCD screen, from the firmware's own drawing code, to keyboards/ergodox/lcd_preview.png
+ergodox-lcd-preview:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    tmp="$(mktemp -d)"
+    trap 'rm -rf "$tmp"' EXIT
+    cd {{ quote(root) }}
+    gcc -std=c11 -Wall -Wextra -Werror -I scripts/lcd_preview -I keyboards/ergodox -o "$tmp/preview" \
+        scripts/lcd_preview/preview.c keyboards/ergodox/lcd.c
+    "$tmp/preview" | python3 scripts/lcd_preview/render.py keyboards/ergodox/lcd_preview.png
+
 # Check that zmk-config/ergo68.keymap is up to date with keyboards/ergo68/keymap.c
 check-zmk-keymap:
     #!/usr/bin/env bash

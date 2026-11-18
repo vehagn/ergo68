@@ -61,6 +61,12 @@ RUN set -eu; \
 ENV ZEPHYR_SDK_INSTALL_DIR=/opt/zephyr-sdk-${ZEPHYR_SDK_VERSION} \
     ZEPHYR_TOOLCHAIN_VARIANT=zephyr
 
+# The DejaVu fonts and Pillow, for scripts/lcd_font.py (the ErgoDox Infinity's LCD fonts), and a host
+# C compiler (gcc, above) for its LCD previews.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends fonts-dejavu-core python3-pil \
+    && rm -rf /var/lib/apt/lists/*
+
 # Non-root user for VS Code; Dev Containers changes its UID/GID to match yours. Ubuntu's image
 # already has a user with UID 1000, which would take the UID Dev Containers wants to give vscode.
 RUN userdel --remove ubuntu 2>/dev/null; \
