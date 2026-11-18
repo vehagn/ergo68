@@ -88,9 +88,12 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
 #endif
 
-    /* NUMPAD: numpad on the right, Boot, Reboot and EEPROM clear on the left */
+    /* NUMPAD: numpad on the right, Boot, Reboot and EEPROM clear on the left. Keep QK_BOOT in both top
+     * corners: with ZMK, Boot puts the half it's pressed on into bootloader mode, so the right half needs
+     * its own (with QMK both reset the left half, which runs the keymap).
+     */
     [_NUMPAD] = LAYOUT_ergo68(
-        QK_BOOT, _______, _______, _______, _______, _______,                             _______, KC_NUM,  KC_PSLS, KC_PAST, KC_PMNS, _______,
+        QK_BOOT, _______, _______, _______, _______, _______,                             _______, KC_NUM,  KC_PSLS, KC_PAST, KC_PMNS, QK_BOOT,
         QK_RBT,  _______, _______, _______, _______, _______, _______,          _______, _______, KC_P7,   KC_P8,   KC_P9,   KC_PPLS, _______,
         EE_CLR,  _______, _______, _______, _______, _______, L_BASE,          L_BASE,  _______, KC_P4,   KC_P5,   KC_P6,   KC_PCMM, _______,
         _______, _______, _______, _______, _______, _______, _______,          _______, _______, KC_P1,   KC_P2,   KC_P3,   KC_PEQL, _______,

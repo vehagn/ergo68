@@ -128,7 +128,7 @@ Lock and Scroll Lock. On the right they show which of NAV (purple), FUNC (orange
 
 ```
 .------.------.------.------.------.------.                .------.------.------.------.------.------.
-| Boot |      |      |      |      |      |                |      |NumLk |  /   |  *   |  -   |      |
+| Boot |      |      |      |      |      |                |      |NumLk |  /   |  *   |  -   | Boot |
 |------+------+------+------+------+------+------.  .------+------+------+------+------+------+------|
 |Reboot|      |      |      |      |      |      |  |      |      |  7   |  8   |  9   |  +   |      |
 |------+------+------+------+------+------+------|  |------+------+------+------+------+------+------|
@@ -208,7 +208,8 @@ has screenshots of every step (in Japanese).
 
 1. Put the BMP in bootloader mode, either:
    * switch the battery off, then hold the reset switch on the PCB while plugging in USB, or
-   * with the keyboard on USB, press `Boot` (top-left key on the NUMPAD layer).
+   * with the keyboard on USB, press `Boot` (top corner keys on the NUMPAD layer). In QMK only the left half runs the
+     keymap, so either `Boot` puts the left half in bootloader mode; the right half needs the reset switch.
 
    The BMP shows up as a USB drive that contains `INFO_UF2.TXT`.
 2. Copy the firmware onto the drive and wait for it to finish; don't unplug it while it copies. Bluetooth in both
@@ -295,7 +296,8 @@ firmwares have the same layers.
 push also builds them on GitHub with ZMK's own build workflow (artifact `ergo68-zmk-firmware`).
 
 **Flashing:** the BMP Boost's bootloader takes ZMK's `.uf2` the same way as the QMK one. Put each half in bootloader
-mode (battery off, hold the reset switch while plugging in USB, or `Boot` on the NUMPAD layer) and copy
+mode (battery off, hold the reset switch while plugging in USB, or `Boot` on the NUMPAD layer: ZMK runs it on the half
+where it's pressed, so the top-left key does the left half and the top-right key the right half) and copy
 `ergo68_left-bmp_boost-zmk.uf2` onto the left half's drive and `ergo68_right-bmp_boost-zmk.uf2` onto the right's. To
 go back to QMK, flash `ergo68_left_ble_micro_pro.uf2` and `ergo68_right_ble_micro_pro.uf2` again.
 
