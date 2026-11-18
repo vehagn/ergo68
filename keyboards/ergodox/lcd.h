@@ -11,7 +11,6 @@
 
 #define LCD_WIDTH 128
 #define LCD_HEIGHT 32
-#define LCD_WPM_HISTORY LCD_WIDTH // one column per sample
 
 // Bits for lcd_draw_layer_screen's indicators.
 enum {
@@ -27,8 +26,9 @@ enum {
 // The layer name, centred, with a badge below it for each active lock and modifier.
 void lcd_draw_layer_screen(const char *name, uint8_t indicators);
 
-// Words per minute above a graph of the last LCD_WPM_HISTORY samples, oldest first.
-void lcd_draw_wpm_screen(uint8_t wpm, const uint8_t *history, uint8_t count);
+// One frame of the idle animation, a zen stone garden that spans both LCDs. half: 0 for the left
+// LCD, 1 for the right. Each frame moves the ripples one pixel outward.
+void lcd_draw_idle(uint8_t half, uint16_t frame);
 
 // Start-up and suspend screens.
 void lcd_draw_splash(void);

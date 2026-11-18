@@ -96,28 +96,66 @@ void lcd_draw_layer_screen(const char *name, uint8_t indicators) {
     draw_badges(indicators, LCD_HEIGHT - BADGE_HEIGHT);
 }
 
-void lcd_draw_wpm_screen(uint8_t wpm, const uint8_t *history, uint8_t count) {
-    st7565_clear();
-    char  text[8]; // "255 wpm"
-    char *p = text;
-    if (wpm >= 100) *p++ = '0' + wpm / 100;
-    if (wpm >= 10) *p++ = '0' + wpm / 10 % 10;
-    *p++ = '0' + wpm % 10;
-    memcpy(p, " wpm", 5);
-    draw_centered(&lcd_font_large, 1, text);
+/*
+ * The idle animation: a zen stone garden across both LCDs (256 x 32, the left half's LCD first).
+ * Raked lines in the sand, and around each stone rings that slowly ripple outward.
+ */
+typedef struct {
+    int16_t x, y;
+    uint8_t r; // stone radius
+} stone_t;
 
-    // The graph fills rows 16-31, scaled to the highest speed shown (at least 40 wpm).
-    const int top = 16, height = LCD_HEIGHT - top;
-    int       max = 40;
-    for (int i = 0; i < count; i++) {
-        if (history[i] > max) max = history[i];
+static const stone_t stones[] = {{34, 17, 5}, {101, 9, 3}, {164, 20, 6}, {226, 11, 4}};
+
+#define RING_SPACING 4 // pixels between rings
+#define RING_ZONE 14   // how far the rings reach beyond a stone
+
+static uint16_t isqrt(uint32_t n) {
+    uint32_t root = 0, bit = 1u << 30;
+    while (bit > n) bit >>= 2;
+    while (bit) {
+        if (n >= root + bit) {
+            n -= root + bit;
+            root = (root >> 1) + bit;
+        } else {
+            root >>= 1;
+        }
+        bit >>= 2;
     }
-    int x = LCD_WIDTH - count;
-    for (int i = 0; i < count; i++, x++) {
-        int h = (history[i] * height + max - 1) / max;
-        fill_rect(x, LCD_HEIGHT - h, 1, h, true);
+    return (uint16_t)root;
+}
+
+void lcd_draw_idle(uint8_t half, uint16_t frame) {
+    st7565_clear();
+    const int x0    = half * LCD_WIDTH;
+    const int phase = frame % RING_SPACING;
+    for (int y = 0; y < LCD_HEIGHT; y++) {
+        for (int x = 0; x < LCD_WIDTH; x++) {
+            // The nearest stone decides this pixel, if it's within its rings.
+            int      gx = x0 + x;
+            uint16_t best = UINT16_MAX;
+            uint8_t  r    = 0;
+            for (unsigned i = 0; i < sizeof(stones) / sizeof(stones[0]); i++) {
+                int32_t  dx = gx - stones[i].x, dy = y - stones[i].y;
+                uint16_t d  = isqrt((uint32_t)(dx * dx + dy * dy));
+                if (d < best) {
+                    best = d;
+                    r    = stones[i].r;
+                }
+            }
+            bool on;
+            if (best <= r) {
+                on = true; // the stone
+            } else if (best <= r + RING_ZONE) {
+                on = (best - r - 1 + RING_SPACING - phase) % RING_SPACING == 0; // its rings
+            } else {
+                on = y % 4 == 2 && gx % 8 != 7; // raked lines, with a gap now and then
+            }
+            if (on) {
+                st7565_write_pixel(x, y, true);
+            }
+        }
     }
-    fill_rect(0, LCD_HEIGHT - 1, LCD_WIDTH, 1, true); // baseline
 }
 
 void lcd_draw_splash(void) {

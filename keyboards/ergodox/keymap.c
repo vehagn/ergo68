@@ -180,10 +180,11 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 #ifdef ST7565_ENABLE
 /*
- * ErgoDox Infinity LCDs (the drawing is in lcd.c, the fonts in lcd_font.h). The half on USB shows
- * the active layer's name and a badge for each active lock and modifier; the other half shows the
- * typing speed with a graph of the last minute. As with the old visualizer, the backlight takes the
- * layer's colour and fades between colours, there's a start-up screen, and it says it's suspending.
+ * ErgoDox Infinity LCDs (the drawing is in lcd.c, the fonts in lcd_font.h). Both halves show the
+ * active layer's name and a badge for each active lock and modifier. As with the old visualizer,
+ * the backlight takes the layer's colour and fades between colours, there's a start-up screen, and
+ * it says it's suspending. After a while without key presses, both LCDs play a zen stone garden
+ * animation together, with the backlight dimmed.
  */
 #    include "lcd.h"
 
@@ -205,7 +206,9 @@ static const layer_style_t layer_styles[] = {
 #    define LCD_FADE_IN_MS 800      // at start-up and when the LCD comes back on
 #    define LCD_FADE_OUT_MS 1000    // when suspending or timing out
 #    define LCD_SPLASH_MS 2000      // how long the start-up screen stays
-#    define LCD_WPM_SAMPLE_MS 500   // one graph column per half second: about a minute in all
+#    define LCD_IDLE_MS 30000       // without key presses before the idle animation starts
+#    define LCD_IDLE_FRAME_MS 250   // per frame of the idle animation
+#    define LCD_IDLE_DIM_MS 2000    // how long the backlight takes to dim when idle
 
 // Backlight colour, 0-255 per channel, shown at the half brightness QMK uses for these LCDs.
 static uint8_t  lcd_rgb[3], fade_from[3], fade_to[3];
@@ -241,19 +244,16 @@ static uint8_t lcd_layer(void) {
     return layer < ARRAY_SIZE(layer_styles) ? layer : _BASE;
 }
 
-static void lcd_fade_to_layer(uint16_t ms) {
+// The layer's colour, at a quarter of it while idle.
+static void lcd_fade_to_layer(uint16_t ms, bool dim) {
     const layer_style_t *style = &layer_styles[lcd_layer()];
-    lcd_fade_to(style->r, style->g, style->b, ms);
+    uint8_t              shift = dim ? 2 : 0;
+    lcd_fade_to(style->r >> shift, style->g >> shift, style->b >> shift, ms);
 }
 
-static bool     splash = true, redraw = true;
-static uint16_t splash_start;
-static uint8_t  shown_layer = UINT8_MAX, shown_indicators, shown_wpm;
-
-#    ifdef WPM_ENABLE
-static uint8_t  wpm_history[LCD_WPM_HISTORY], wpm_count;
-static uint16_t wpm_sample_timer;
-#    endif
+static bool     splash = true, redraw = true, idle;
+static uint16_t splash_start, idle_frame = UINT16_MAX;
+static uint8_t  shown_layer = UINT8_MAX, shown_indicators;
 
 void keyboard_post_init_user(void) {
     lcd_apply_colour(); // dark, then fade in behind the start-up screen
@@ -263,7 +263,7 @@ void keyboard_post_init_user(void) {
 }
 
 void st7565_on_user(void) {
-    lcd_fade_to_layer(LCD_FADE_IN_MS);
+    lcd_fade_to_layer(LCD_FADE_IN_MS, false);
 }
 
 void st7565_off_user(void) {
@@ -272,17 +272,6 @@ void st7565_off_user(void) {
 
 void housekeeping_task_user(void) {
     lcd_fade_task();
-#    ifdef WPM_ENABLE
-    if (!is_keyboard_master() && timer_elapsed(wpm_sample_timer) >= LCD_WPM_SAMPLE_MS) {
-        wpm_sample_timer = timer_read();
-        if (wpm_count == LCD_WPM_HISTORY) {
-            memmove(wpm_history, wpm_history + 1, LCD_WPM_HISTORY - 1);
-            wpm_count--;
-        }
-        wpm_history[wpm_count++] = get_current_wpm();
-        redraw                   = true;
-    }
-#    endif
 }
 
 void st7565_task_user(void) {
@@ -292,34 +281,47 @@ void st7565_task_user(void) {
         }
         splash = false;
         redraw = true;
-        lcd_fade_to_layer(LCD_FADE_MS);
+        lcd_fade_to_layer(LCD_FADE_MS, false);
+    }
+
+    // Idle: both halves count from the last key press on either half (SPLIT_ACTIVITY_ENABLE), so
+    // they start the animation together and keep roughly the same frame.
+    uint32_t quiet = last_input_activity_elapsed();
+    if (quiet >= LCD_IDLE_MS) {
+        if (!idle) {
+            idle = true;
+            lcd_fade_to_layer(LCD_IDLE_DIM_MS, true);
+        }
+        uint16_t frame = (quiet - LCD_IDLE_MS) / LCD_IDLE_FRAME_MS;
+        if (frame != idle_frame) {
+            idle_frame = frame;
+            lcd_draw_idle(is_keyboard_left() ? 0 : 1, frame);
+        }
+        return;
+    }
+    if (idle) {
+        idle       = false;
+        idle_frame = UINT16_MAX;
+        redraw     = true;
+        lcd_fade_to_layer(LCD_FADE_MS, false);
     }
 
     uint8_t layer = lcd_layer();
     if (layer != shown_layer) {
         if (shown_layer != UINT8_MAX) {
-            lcd_fade_to_layer(LCD_FADE_MS);
+            lcd_fade_to_layer(LCD_FADE_MS, false);
         }
         shown_layer = layer;
         redraw      = true;
     }
 
-    if (is_keyboard_master()) {
-        led_t   host       = host_keyboard_led_state();
-        uint8_t mods       = get_mods() | get_oneshot_mods();
-        uint8_t indicators = (host.caps_lock ? LCD_CAPS : 0) | (host.num_lock ? LCD_NUM : 0) | (host.scroll_lock ? LCD_SCROLL : 0) | (mods & MOD_MASK_SHIFT ? LCD_SHIFT : 0) | (mods & MOD_MASK_CTRL ? LCD_CTRL : 0) | (mods & MOD_MASK_ALT ? LCD_ALT : 0) | (mods & MOD_MASK_GUI ? LCD_GUI : 0);
-        if (redraw || indicators != shown_indicators) {
-            shown_indicators = indicators;
-            lcd_draw_layer_screen(layer_styles[layer].name, indicators);
-        }
-    } else {
-#    ifdef WPM_ENABLE
-        uint8_t wpm = get_current_wpm();
-        if (redraw || wpm != shown_wpm) {
-            shown_wpm = wpm;
-            lcd_draw_wpm_screen(wpm, wpm_history, wpm_count);
-        }
-#    endif
+    // The modifiers reach the other half with SPLIT_MODS_ENABLE, the locks with SPLIT_LED_STATE_ENABLE.
+    led_t   host       = host_keyboard_led_state();
+    uint8_t mods       = get_mods() | get_oneshot_mods();
+    uint8_t indicators = (host.caps_lock ? LCD_CAPS : 0) | (host.num_lock ? LCD_NUM : 0) | (host.scroll_lock ? LCD_SCROLL : 0) | (mods & MOD_MASK_SHIFT ? LCD_SHIFT : 0) | (mods & MOD_MASK_CTRL ? LCD_CTRL : 0) | (mods & MOD_MASK_ALT ? LCD_ALT : 0) | (mods & MOD_MASK_GUI ? LCD_GUI : 0);
+    if (redraw || indicators != shown_indicators) {
+        shown_indicators = indicators;
+        lcd_draw_layer_screen(layer_styles[layer].name, indicators);
     }
     redraw = false;
 }
@@ -340,7 +342,7 @@ void suspend_power_down_user(void) {
 void suspend_wakeup_init_user(void) {
     suspended = false;
     redraw    = true;
-    lcd_fade_to_layer(LCD_FADE_IN_MS);
+    lcd_fade_to_layer(LCD_FADE_IN_MS, false);
 }
 #endif
 

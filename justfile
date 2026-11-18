@@ -150,7 +150,7 @@ ergodox-lcd-font:
     mv "$tmp" {{ quote(root / "keyboards/ergodox/lcd_font.h") }}
     echo "Wrote keyboards/ergodox/lcd_font.h"
 
-# Render every ErgoDox Infinity LCD screen, from the firmware's own drawing code, to keyboards/ergodox/lcd_preview.png
+# Render the ErgoDox Infinity LCD screens, from the firmware's own drawing code, to keyboards/ergodox/lcd_preview.png and lcd_idle.gif
 ergodox-lcd-preview:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -160,6 +160,7 @@ ergodox-lcd-preview:
     gcc -std=c11 -Wall -Wextra -Werror -I scripts/lcd_preview -I keyboards/ergodox -o "$tmp/preview" \
         scripts/lcd_preview/preview.c keyboards/ergodox/lcd.c
     "$tmp/preview" | python3 scripts/lcd_preview/render.py keyboards/ergodox/lcd_preview.png
+    "$tmp/preview" idle | python3 scripts/lcd_preview/render.py keyboards/ergodox/lcd_idle.gif
 
 # Check that zmk-config/ergo68.keymap is up to date with keyboards/ergo68/keymap.c
 check-zmk-keymap:
