@@ -7,10 +7,18 @@ microcontroller, so these are QMK only.
 
 ## Layout
 
-`MEDIA`, `NUMPD` and `FUNC` latch their layer on, and `BASE` (the key in the same spot) returns to the base layer.
-Holding `;` gives MEDIA momentarily. Blank keys fall through to the base layer. `C+A` on the left thumb is Ctrl+Alt while
-held and Menu when tapped: hold it, tap `FUNC` and press an F-key for Ctrl+Alt+Fx (TTY switching). `Boot` puts the half
-that's plugged into USB in bootloader mode (see [ErgoDox Infinity](#ergodox-infinity)).
+The same four layers as the [Ergo68](../ergo68/README.md), with the same keys wherever the two keyboards have the same
+keys. The ErgoDox has eight more, all on the thumbs, and they keep their old functions: `C+A`, `PrtSc`, `Home` and `End`
+on the left, `FUNC`, `Ins`, `PgUp` and `PgDn` on the right.
+
+* `NAV` is held: either `NAV` key in the bottom row.
+* `FUNC` and `NUMPD` latch their layer on, and `BASE` (the key in the same spot) returns to the base layer. Holding `;`
+  gives FUNC momentarily.
+* Blank keys fall through to the base layer.
+* `C+A` on the left thumb is Ctrl+Alt while held and Menu when tapped: hold it, tap `FUNC` and press an F-key for
+  Ctrl+Alt+Fx (TTY switching).
+* `§` sends the ISO key next to left Shift, so what it types depends on the computer's keyboard layout.
+* `Boot` puts the half that's plugged into USB in bootloader mode (see [ErgoDox Infinity](#ergodox-infinity)).
 
 ### BASE
 
@@ -18,13 +26,13 @@ that's plugged into USB in bootloader mode (see [ErgoDox Infinity](#ergodox-infi
 .------.------.------.------.------.------.------.          .------.------.------.------.------.------.------.
 |  \   |  1   |  2   |  3   |  4   |  5   | Esc  |          | Esc  |  6   |  7   |  8   |  9   |  0   |  /   |
 |------+------+------+------+------+------+------|          |------+------+------+------+------+------+------|
-| Tab  |  Q   |  W   |  E   |  R   |  T   |MEDIA |          |NUMPD |  Y   |  U   |  I   |  O   |  P   |  '   |
+| Tab  |  Q   |  W   |  E   |  R   |  T   | FUNC |          |NUMPD |  Y   |  U   |  I   |  O   |  P   |  '   |
 |------+------+------+------+------+------|      |          |      |------+------+------+------+------+------|
-|  `   |  A   |  S   |  D   |  F   |  G   |------|          |------|  H   |  J   |  K   |  L   |;/MED |  =   |
+|  `   |  A   |  S   |  D   |  F   |  G   |------|          |------|  H   |  J   |  K   |  L   |;/FUNC|  =   |
 |------+------+------+------+------+------|  [   |          |  ]   |------+------+------+------+------+------|
 |Shift |  Z   |  X   |  C   |  V   |  B   |      |          |      |  N   |  M   |  ,   |  .   |  :   |  -   |
 '------+------+------+------+------+------+------'          '------+------+------+------+------+------+------'
-| Ctrl | GUI  | Alt  |  ~   |  $   |                                      | Left | Down |  Up  |Right |AltGr |
+| Ctrl | Alt  | GUI  |  ~   | NAV  |                                      | NAV  |  $   |  §   | Menu |AltGr |
 '------'------'------'------'------'                                      '------'------'------'------'------'
                                         .------.------.  .------.------.
                                         | C+A  |PrtSc |  | FUNC | Ins  |
@@ -35,23 +43,19 @@ that's plugged into USB in bootloader mode (see [ErgoDox Infinity](#ergodox-infi
                                  '------'------'------'  '------'------'------'
 ```
 
-### MEDIA (tap MEDIA or hold `;`)
-
-The lighting keys control the Infinity's per-key backlight (`Light` on/off, `Mode`, brightness `Bri`, speed `Spd`;
-`Hue` and `Sat` do nothing there), the EZ Glow's RGB matrix or the EZ Shine's underglow. On the plain EZ they do
-nothing.
+### NAV (hold NAV)
 
 ```
 .------.------.------.------.------.------.------.          .------.------.------.------.------.------.------.
-| Boot | Hue- | Hue+ | Sat- | Sat+ |Mode- |Mode+ |          |      |      |      |      |      |      | Boot |
+|      |      |      |      |      |      |      |          |      |      |      |      |      |      |      |
 |------+------+------+------+------+------+------|          |------+------+------+------+------+------+------|
-|EEClr |      |      |      |      |      | BASE |          | BASE | Prev | Mute |      | Next |      |      |
+|      |      | Back | Btn1 | Btn2 | Fwd  | BASE |          | BASE |      |      |      |      |      |      |
 |------+------+------+------+------+------|      |          |      |------+------+------+------+------+------|
-|      |      |      |      |      |      |------|          |------| Rew  | Vol- | Vol+ |  FF  |      | Play |
-|------+------+------+------+------+------|      |          |      |------+------+------+------+------+------|
-|      |      |      |      |      |      |      |          |      |      |      |      |      |      | Stop |
+|      |      |  M←  |  M↓  |  M↑  |  M→  |------|          |------| Left | Down |  Up  |Right |      |      |
+|------+------+------+------+------+------| Btn3 |          |      |------+------+------+------+------+------|
+|      |      |  W←  |  W↓  |  W↑  |  W→  |      |          |      | Home | PgDn | PgUp | End  |      |      |
 '------+------+------+------+------+------+------'          '------+------+------+------+------+------+------'
-|Light | Spd- | Spd+ | Bri- | Bri+ |                                      |Mode+ |Light | Bri- | Bri+ |      |
+|      |      |      |      |      |                                      |      |      |      |      |      |
 '------'------'------'------'------'                                      '------'------'------'------'------'
                                         .------.------.  .------.------.
                                         |      |      |  |      |      |
@@ -62,49 +66,49 @@ nothing.
                                  '------'------'------'  '------'------'------'
 ```
 
-### NUMPAD (tap NUMPD)
+### FUNC (tap FUNC or hold `;`)
 
-Mouse keys on the left, numpad on the right. The `(`, `)`, `.` and `,` are the numpad's own keys where they exist.
+The lighting keys control the Infinity's per-key backlight (`Light` on/off, `On`, `Off`, `Mode`, brightness `Bri`;
+`Hue` and `Sat` do nothing there), the EZ Glow's RGB matrix or the EZ Shine's underglow (where `On`/`Off` do
+nothing). On the plain EZ they do nothing. `NKRO` switches n-key rollover on and off.
 
 ```
 .------.------.------.------.------.------.------.          .------.------.------.------.------.------.------.
-| Boot |      |      | Btn4 | Btn5 |      |      |          |      |      |NumLk |  /   |  *   |  -   | Boot |
+| Sat+ |  F1  |  F2  |  F3  |  F4  |  F5  |      |          |      |  F6  |  F7  |  F8  |  F9  | F10  | F11  |
 |------+------+------+------+------+------+------|          |------+------+------+------+------+------+------|
-|      | Acc0 | Back | Btn1 | Btn2 | Fwd  | BASE |          | BASE |  (   |  7   |  8   |  9   |  +   |EEClr |
+| Sat- |Mode+ |      |      |      |      | BASE |          | BASE | Ins  |ScrLk |PrtSc |Pause |      | F12  |
 |------+------+------+------+------+------|      |          |      |------+------+------+------+------+------|
-|      | Acc1 |  M←  |  M↓  |  M↑  |  M→  |------|          |------|  )   |  4   |  5   |  6   |  .   |      |
-|------+------+------+------+------+------| Btn3 |          |      |------+------+------+------+------+------|
-|      | Acc2 |  W←  |  W↓  |  W↑  |  W→  |      |          |      |  0   |  1   |  2   |  3   |  ,   |      |
+| Bri+ |Light |Mode+ |Mode- | Hue+ | Hue- |------|          |------| Prev | Vol- | Vol+ | Next |      | Play |
+|------+------+------+------+------+------|      |          |      |------+------+------+------+------+------|
+| Bri- | Off  |      |      |      |      |      |          |      | Rew  | Mute |      |  FF  |      | Stop |
 '------+------+------+------+------+------+------'          '------+------+------+------+------+------+------'
-|      |      |      |      |      |                                      |      |      |      |      |      |
+| Boot |      |      |      |      |                                      |      |      |      |      | Boot |
 '------'------'------'------'------'                                      '------'------'------'------'------'
                                         .------.------.  .------.------.
-                                        |      |      |  | FUNC |      |
+                                        | NKRO |      |  | BASE |      |
                                  .------+------+------|  |------+------+------.
                                  |      |      |      |  |      |      |      |
-                                 |      |      |------|  |------|      |  0   |
+                                 |  On  | Off  |------|  |------|      |      |
                                  |      |      |      |  |      |      |      |
                                  '------'------'------'  '------'------'------'
 ```
 
-### FUNC (tap FUNC)
-
-`NKRO` switches n-key rollover on and off.
+### NUMPAD (tap NUMPD)
 
 ```
 .------.------.------.------.------.------.------.          .------.------.------.------.------.------.------.
-| Boot |  F1  |  F2  |  F3  |  F4  |  F5  |      |          | Boot |  F6  |  F7  |  F8  |  F9  | F10  | F11  |
+| Boot |      |      |      |      |      |      |          |      |      |NumLk |  /   |  *   |  -   |      |
 |------+------+------+------+------+------+------|          |------+------+------+------+------+------+------|
-|EEClr |      |      |      |      |      | BASE |          | BASE |      |      |      |      |      | F12  |
+|Reboot|      |      |      |      |      | BASE |          | BASE |      |  7   |  8   |  9   |  +   |      |
 |------+------+------+------+------+------|      |          |      |------+------+------+------+------+------|
-|      |      |      |      |      |      |------|          |------|      |      |      |      |      |      |
+|EEClr |      |      |      |      |      |------|          |------|      |  4   |  5   |  6   |  ,   |      |
 |------+------+------+------+------+------|      |          |      |------+------+------+------+------+------|
-|      |      |      |      |      |S-Ins |      |          |      |      |      |      |      | RGUI |RShft |
+|      |      |      |      |      |      |      |          |      |      |  1   |  2   |  3   |  =   |      |
 '------+------+------+------+------+------+------'          '------+------+------+------+------+------+------'
-|      |      |      |      |      |                                      |      |      |      |      |RCtrl |
+|      |      |      |      |      |                                      |      |  0   |  .   |  ,   |      |
 '------'------'------'------'------'                                      '------'------'------'------'------'
                                         .------.------.  .------.------.
-                                        | NKRO |      |  | BASE |      |
+                                        |      |      |  |      |      |
                                  .------+------+------|  |------+------+------.
                                  |      |      |      |  |      |      |      |
                                  |      |      |------|  |------|      |      |
@@ -114,18 +118,18 @@ Mouse keys on the left, numpad on the right. The `(`, `)`, `.` and `,` are the n
 
 ## What changed from the old repository
 
-* **Same layers and keys.** BASE, MEDIA, NUMPAD and FUNC are where they were, with the same latching behaviour:
-  `MEDIA`, `NUMPAD` and `FUNC` switch their layer on and `BASE` returns. They're now QMK's standard `TG()`/`TO()` keys
-  instead of custom keycodes, and old keycode names are updated (`RESET` → `QK_BOOT`, `EEP_RST` → `EE_CLR`, mouse keys
-  → `MS_*`, `MAGIC_TOGGLE_NKRO` → `NK_TOGG`).
+* **The Ergo68's layout.** The layers are now the Ergo68's: BASE, NAV (held, mouse keys and navigation), FUNC
+  (F-keys, media and lighting) and NUMPAD. The old MEDIA layer is gone; its media and lighting keys are on FUNC and the
+  mouse keys on NAV. Old keycode names are updated (`RESET` → `QK_BOOT`, `EEP_RST` → `EE_CLR`, mouse keys → `MS_*`,
+  `MAGIC_TOGGLE_NKRO` → `NK_TOGG`).
 * **The LCDs (Infinity).** QMK's old LCD "visualizer" no longer exists; the LCDs now use QMK's ST7565 driver. As
-  before, they show the active layer's name (*Ergodox Infinity*, *Media*, *Mouse + Numpad*, *Function keys*) and their
-  backlight takes the layer's colour from the old visualizer. The second line shows Caps, Num and Scroll Lock. Both
+  before, they show the active layer's name (*Ergodox Infinity*, *Mouse + Navigation*, *Function keys*, *Numpad*) and
+  their backlight takes the layer's colour, with the old visualizer's colours. The second line shows Caps, Num and Scroll Lock. Both
   halves show it.
-* **Lighting keys on MEDIA.** The old RGB and backlight keys now control whatever lighting the board has: the per-key
+* **Lighting keys on FUNC.** The old RGB and backlight keys now control whatever lighting the board has: the per-key
   backlight on the Infinity (on/off, effect, brightness, speed), RGB matrix on the EZ Glow, RGB underglow on the EZ Shine.
   On the plain EZ they do nothing. The RGB mode keys (plain, breathing, rainbow, …) are gone.
-* **The EZ's three LEDs** show which of MEDIA, NUMPAD and FUNC are latched on.
+* **The EZ's three LEDs** show which of NAV, FUNC and NUMPAD are on.
 * **One firmware for both Infinity halves.** There's no `MASTER=right` build any more; plug the left half into the
   computer.
 
@@ -142,12 +146,13 @@ the same file:
 **Bootloader mode without the program button.** The program button is on the back (above the thumb cluster), behind
 the case. With this firmware already on the keyboard, a key does the same for the half that's plugged into USB:
 
-* **Left half** (normal use, USB in the left half): tap `MEDIA` (left half, inner column, second row) and press the
-  top-left key. Holding `;` and pressing the top-left key works too.
+* **Left half** (normal use, USB in the left half): tap `FUNC` (left half, inner column, second row) and press the
+  bottom-left key (`Ctrl`). Holding `;` and pressing the bottom-left key works too.
 * **Right half:** plug USB into the right half instead. The half on USB always acts as the left half, and on the
   Infinity every key has the same matrix position as its mirror image on the other half, so the right half's keys now
   do what their left-hand mirror images do. Tap the right half's inner-column key in the second row (normally `NUMPD`,
-  now `MEDIA`), then press its top-right key. This only uses the right half, so it works with the halves disconnected.
+  now `FUNC`), then press its bottom-right key (normally `AltGr`, now `Boot`). This only uses the right half, so it
+  works with the halves disconnected.
 
 Keymap changes only need the left half flashed: the half on USB runs the keymap, the other only reports its key
 presses. After a QMK update, flash both halves so their split protocol matches.
