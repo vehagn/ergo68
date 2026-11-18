@@ -179,32 +179,24 @@ Then connect the halves and plug the left half into the computer. If you'd rathe
 ![The sound wave across both LCDs](lcd_wave.gif)
 
 The wave really is simulated: `lcd_wave.c` solves the 2D wave equation with the usual explicit finite-difference scheme,
-in integers, 20 steps a second on a 256 x 32 grid (one cell per pixel, both LCDs).
+in integers, 20 steps a second on a 256 x 32 grid (one cell per pixel, both LCDs), and draws the crests.
 
-* **The drops** are smooth bumps let go at rest, so each spreads as a ring. (A bump that starts moving leaves a raised
-  wake inside the ring in 2D, and after reflecting off the top and bottom those wakes piled up into dark lobes.)
-* **The disks** (1 to 5, radius 2 to 4 pixels, at random places) are rigid: no flow into them (a Neumann boundary), so
-  waves reflect off them as off a solid object.
-* **A corridor:** the top and bottom edges are rigid too, and the left and right ends absorb, with Mur's first-order
-  absorbing boundary condition: each end cell is set as if the wave carried on past it. Measured on this grid, a drop's
-  waves stay visible for about 13 seconds this way. With all four edges absorbing they were gone within a second or
-  two, since the top and bottom are never more than 16 pixels away. (Mur's condition lets out all but 1% of a pulse's
-  energy within 15 seconds where it's used; a few cells of graded damping in front of the edges, a cheap stand-in for
-  a perfectly matched layer, did worse than Mur alone.)
-* **Viscosity** takes out the grid's pixel-scale ripples (numerical dispersion), which made the screen speckled: like
-  air, it damps short wavelengths far more than long ones. High crests are drawn solid and a band below them as a
-  checkerboard, for soft edges; a finer dither showed the faint ripples as scattered dots.
-* **Damping** decides how long a drop's waves last: about 9 seconds with `WAVE_DAMPING` 128 (1/128 lost per step). Use
-  64 for about 6 seconds, 256 or more for longer. `WAVE_CREST` and `WAVE_VISCOSITY` in `lcd_wave.c` also trade how long
-  waves stay visible (lower) against how calm the screen gets between drops (higher).
+* **Drops** are smooth bumps let go at rest, so each spreads as a ring.
+* **Disks** (1 to 5, radius 2 to 4 pixels, at random places) are rigid: no flow into them, so waves reflect off them as
+  off a solid object.
+* **A corridor:** the top and bottom edges are rigid too, so waves bounce between them along the strip, and the left
+  and right ends absorb (Mur's first-order absorbing boundary condition: each end cell is set as if the wave carried
+  on past it).
+* **Damping** decides how long a drop's waves last: `WAVE_DAMPING` in `lcd_wave.c`, the fraction lost per step (1/128;
+  higher numbers last longer).
 
 Each half simulates the whole grid; the half on USB picks the random seed (disks and drops) and sends it to the other
 over the cable, and the integer maths gives both exactly the same wave. If the seed doesn't arrive, that half shows a
 zen stone garden instead.
 
 The timings are at the top of the LCD code in `keymap.c` (`LCD_IDLE_MS`, `LCD_WAVE_STEP_MS` and the fades) and in
-`config.h` (`ST7565_TIMEOUT`, when the LCDs turn off); the wave's disks, drops and calm threshold are at the top of
-`lcd_wave.c`.
+`config.h` (`ST7565_TIMEOUT`, when the LCDs turn off); the wave's damping, crest threshold, disks and drops are at the
+top of `lcd_wave.c`.
 
 The text is DejaVu Sans Mono, monospaced, rendered without anti-aliasing: bold at 12 px for the big line and 8 px for
 the badges. `lcd_font.h` is generated from the font by `just ergodox-lcd-font` (`scripts/lcd_font.py`), and the drawing is
