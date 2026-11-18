@@ -191,9 +191,10 @@ in integers, 20 steps a second on a 256 x 32 grid (one cell per pixel, both LCDs
   a perfectly matched layer, did worse than Mur alone.)
 * **Viscosity** takes out the grid's pixel-scale ripples (numerical dispersion), which made the screen speckled: like
   air, it damps short wavelengths far more than long ones. High crests are drawn solid and a band below them as a
-  checkerboard, for soft edges; a finer dither showed the faint ripples as scattered dots. `WAVE_CREST` and
-  `WAVE_VISCOSITY` in `lcd_wave.c` trade how long waves stay visible (lower) against how calm the screen gets between
-  drops (higher).
+  checkerboard, for soft edges; a finer dither showed the faint ripples as scattered dots.
+* **Damping** decides how long a drop's waves last: about 9 seconds with `WAVE_DAMPING` 128 (1/128 lost per step). Use
+  64 for about 6 seconds, 256 or more for longer. `WAVE_CREST` and `WAVE_VISCOSITY` in `lcd_wave.c` also trade how long
+  waves stay visible (lower) against how calm the screen gets between drops (higher).
 
 Each half simulates the whole grid; the half on USB picks the random seed (disks and drops) and sends it to the other
 over the cable, and the integer maths gives both exactly the same wave. If the seed doesn't arrive, that half shows a

@@ -25,8 +25,8 @@
  *
  * The grid carries pixel-scale wavelengths at the wrong speed (numerical dispersion), so ripples
  * gather behind the wavefronts. A viscosity term, nu * laplacian(u - u_prev), takes them out: like
- * air, it damps short wavelengths far more than long ones. A trace of plain damping clears the
- * integer rounding that's left.
+ * air, it damps short wavelengths far more than long ones. Plain damping on top decides how long a
+ * drop's waves last: with 1/128 per step, about 9 seconds (1/1024 kept them going past 15).
  *
  * Each half simulates the whole field, so they need no data from each other while it runs: the
  * integer maths is exact and the same on both, so they only have to start from the same random
@@ -49,6 +49,7 @@ static uint32_t rng;
 static uint32_t step_count, next_drop;
 
 #define DISKS_MAX 5   // obstacles: 1 to 5 disks, radius 2 to 4
+#define WAVE_DAMPING 128  // lose 1/128 of the wave per step: a drop fades out in about 9 seconds
 #define WAVE_VISCOSITY 16 // viscosity nu = 1/16 (0: none; 1/4 is already unstable), see lcd_wave_step
 #define WAVE_CREST 450    // crests above this are solid, above 2/3 of it a checkerboard
 #define DROP_AMPLITUDE 8000 // strong enough to stay above WAVE_CREST as the waves spread
@@ -175,7 +176,7 @@ void lcd_wave_step(void) {
                 next += lap_v / WAVE_VISCOSITY;
 #endif
             }
-            next -= next / 1024; // a trace of damping, for what integer rounding leaves behind
+            next -= next / WAVE_DAMPING; // plain damping: how quickly the waves die out
             u_prev[y][x] = clamp16(next); // u_prev isn't needed any more, so it takes the new step
         }
         memcpy(old_above, old_here, sizeof(old_above));
