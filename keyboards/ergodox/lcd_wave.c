@@ -3,13 +3,20 @@
  * The idle animation: a sound wave, simulated across both LCDs (256 x 32 cells, one per pixel, the
  * left half's LCD first).
  *
- * It solves the 2D wave equation u_tt = c^2 (u_xx + u_yy) with the usual explicit finite-difference
- * scheme, at a Courant number of 1/2 (c dt / dx = 1/2, stable up to 1/sqrt(2)):
+ * It solves the 2D wave equation u_tt = c^2 (u_xx + u_yy) with an explicit finite-difference scheme:
+ * leapfrog in time, and in space the fourth-order Laplacian, which reaches two cells out,
  *
- *     u_next = u + (u_north + u_south + u_east + u_west) / 4 - u_prev
+ *     u_xx ~ (-u[x-2] + 16 u[x-1] - 30 u + 16 u[x+1] - u[x+2]) / 12   (and the same for y)
  *
- * in 16-bit integers, minus a little damping each step (WAVE_DAMPING). Drops are smooth bumps let go
- * at rest, so each spreads as a ring.
+ * so at a Courant number of 1/2 (c dt / dx = 1/2; stable up to sqrt(3/8) ~ 0.61 in 2D):
+ *
+ *     u_next = 2 u - u_prev + (16 * (sum of the 4 nearest) - (sum of the 4 two out) - 60 u) / 48
+ *
+ * The usual second-order stencil, u_next = u + (sum of the 4 nearest) / 4 - u_prev, sends short
+ * wavelengths too slowly (numerical dispersion), which shows as a train of rings behind each front;
+ * the wider stencil keeps them much closer together. Where it would reach into a disk or past an
+ * edge, a cell uses the second-order stencil instead. All in 16-bit integers, minus a little damping
+ * each step (WAVE_DAMPING). Drops are smooth bumps let go at rest, so each spreads as a ring.
  *
  * Up to five small disks at random places are rigid obstacles (no flow into them), and so are the
  * top and bottom edges: the two LCDs make a corridor the waves bounce along. The left and right ends
@@ -42,7 +49,7 @@
 static int16_t  wave_a[WAVE_H][WAVE_W], wave_b[WAVE_H][WAVE_W];
 static int16_t (*u)[WAVE_W] = wave_a, (*u_prev)[WAVE_W] = wave_b;
 static uint8_t  walls[WAVE_H][WAVE_W / 8];     // one bit per cell, set inside the disks
-static uint8_t  near_wall[WAVE_H][WAVE_W / 8]; // set on and next to the disks: cells that need checks
+static uint8_t  near_wall[WAVE_H][WAVE_W / 8]; // set within two cells of a disk: cells that need checks
 static uint32_t rng, step_count, next_drop;
 
 static uint32_t random_below(uint32_t n) {
@@ -64,12 +71,14 @@ static void set_bit(uint8_t (*bits)[WAVE_W / 8], int x, int y) {
 
 static void set_wall(int x, int y) {
     set_bit(walls, x, y);
-    // The cell and its four neighbours need the checks in lcd_wave_step.
+    // Cells whose fourth-order stencil reaches this one need the checks in lcd_wave_step.
     set_bit(near_wall, x, y);
-    set_bit(near_wall, x - 1, y);
-    set_bit(near_wall, x + 1, y);
-    set_bit(near_wall, x, y - 1);
-    set_bit(near_wall, x, y + 1);
+    for (int d = 1; d <= 2; d++) {
+        set_bit(near_wall, x - d, y);
+        set_bit(near_wall, x + d, y);
+        set_bit(near_wall, x, y - d);
+        set_bit(near_wall, x, y + d);
+    }
 }
 
 static int16_t clamp16(int32_t v) {
@@ -125,23 +134,33 @@ void lcd_wave_start(uint32_t seed) {
     random_drop();
 }
 
+// The second-order update, for cells next to a disk or an edge: a disk's cells count as the cell's
+// own value (no flow into the disk).
+static int32_t step_near(int x, int y) {
+    int32_t here = u[y][x];
+    int32_t sum  = (is_wall(x, y - 1) ? here : u[y - 1][x]) + (is_wall(x, y + 1) ? here : u[y + 1][x]) + (is_wall(x - 1, y) ? here : u[y][x - 1]) + (is_wall(x + 1, y) ? here : u[y][x + 1]);
+    return sum / 4 + here - u_prev[y][x];
+}
+
 void lcd_wave_step(void) {
     // The inside of the grid; u_prev takes the new step in place (each cell reads its own old value
-    // before overwriting it). Next to a disk, the disk's cells count as the cell's own value (no flow
-    // into the disk); everywhere else, nearly all cells, skips those checks.
+    // before overwriting it). Nearly all cells are at least two from a disk and an edge and take the
+    // fourth-order stencil; the rest the second-order one.
     for (int y = 1; y < WAVE_H - 1; y++) {
-        const int16_t *above = u[y - 1], *row = u[y], *below = u[y + 1];
+        bool inner_row = y >= 2 && y < WAVE_H - 2;
         for (int x = 1; x < WAVE_W - 1; x++) {
-            int32_t here = row[x], sum;
-            if (!(near_wall[y][x >> 3] & (1 << (x & 7)))) {
-                sum = above[x] + below[x] + row[x - 1] + row[x + 1];
+            int32_t next;
+            if (inner_row && x >= 2 && x < WAVE_W - 2 && !(near_wall[y][x >> 3] & (1 << (x & 7)))) {
+                int32_t here = u[y][x];
+                int32_t near = u[y - 1][x] + u[y + 1][x] + u[y][x - 1] + u[y][x + 1];
+                int32_t far  = u[y - 2][x] + u[y + 2][x] + u[y][x - 2] + u[y][x + 2];
+                next         = 2 * here - u_prev[y][x] + (16 * near - far - 60 * here) / 48;
             } else if (is_wall(x, y)) {
                 u_prev[y][x] = 0;
                 continue;
             } else {
-                sum = (is_wall(x, y - 1) ? here : above[x]) + (is_wall(x, y + 1) ? here : below[x]) + (is_wall(x - 1, y) ? here : row[x - 1]) + (is_wall(x + 1, y) ? here : row[x + 1]);
+                next = step_near(x, y);
             }
-            int32_t next = sum / 4 + here - u_prev[y][x];
             u_prev[y][x] = clamp16(next - next / WAVE_DAMPING);
         }
     }

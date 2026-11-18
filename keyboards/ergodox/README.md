@@ -178,8 +178,11 @@ Then connect the halves and plug the left half into the computer. If you'd rathe
 
 ![The sound wave across both LCDs](lcd_wave.gif)
 
-The wave really is simulated: `lcd_wave.c` solves the 2D wave equation with the usual explicit finite-difference scheme,
-in integers, 20 steps a second on a 256 x 32 grid (one cell per pixel, both LCDs), and draws the crests.
+The wave really is simulated: `lcd_wave.c` solves the 2D wave equation with an explicit finite-difference scheme, in
+integers, 20 steps a second on a 256 x 32 grid (one cell per pixel, both LCDs), and draws the crests. The Laplacian is
+the fourth-order stencil, which reaches two cells out: compared with the usual second-order one it keeps the rings
+round and the reflected arcs whole, where the short wavelengths used to lag behind as a train of broken rings
+(numerical dispersion). Next to a disk or an edge, where it would reach too far, a cell uses the second-order stencil.
 
 * **Drops** are smooth bumps let go at rest, so each spreads as a ring.
 * **Disks** (1 to 5, radius 2 to 4 pixels, at random places) are rigid: no flow into them, so waves reflect off them as
