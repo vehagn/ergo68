@@ -95,7 +95,10 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_PGDN, KC_ENT,  KC_SPC
     ),
 
-    /* MEDIA: lighting on the left, media keys on the right */
+    /* MEDIA: lighting on the left, media keys on the right.
+     * Keep QK_BOOT in both top corners and L_MEDIA on the left inner key of the second row: on the
+     * Infinity they're how each half gets into bootloader mode without the program button (README).
+     */
     [_MEDIA] = LAYOUT_ergodox(
         /* left hand */
         QK_BOOT, LI_HUED, LI_HUEU, LI_SATD, LI_SATU, LI_PREV, LI_NEXT,
