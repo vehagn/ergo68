@@ -21,8 +21,12 @@
  * about 13 seconds this way; with all four edges absorbing it was gone within one or two, as the top
  * and bottom are never more than 16 pixels from a drop. (Mur on all edges let out all but 1% of the
  * energy within 15 seconds, reflecting edges kept 57%, and a few cells of graded damping in front of
- * the edges, a cheap PML, did worse than Mur alone.) A trace of damping clears the integer rounding
- * that's left. Random drops start new waves now and then.
+ * the edges, a cheap PML, did worse than Mur alone.) Random drops start new waves now and then.
+ *
+ * The grid carries pixel-scale wavelengths at the wrong speed (numerical dispersion), so ripples
+ * gather behind the wavefronts. A viscosity term, nu * laplacian(u - u_prev), takes them out: like
+ * air, it damps short wavelengths far more than long ones. A trace of plain damping clears the
+ * integer rounding that's left.
  *
  * Each half simulates the whole field, so they need no data from each other while it runs: the
  * integer maths is exact and the same on both, so they only have to start from the same random
@@ -44,8 +48,9 @@ static uint32_t rng;
 static uint16_t step_count, next_drop;
 
 #define DISKS_MAX 5   // obstacles: 1 to 5 disks, radius 2 to 4
-#define WAVE_CALM 240 // heights below this aren't drawn, so small ripples don't speckle the screen
-#define DROP_AMPLITUDE 8000 // strong enough to stay above WAVE_CALM as the waves spread
+#define WAVE_VISCOSITY 8  // viscosity nu = 1/8 (0: none; 1/4 is already unstable), see lcd_wave_step
+#define WAVE_CREST 450    // crests higher than this are drawn; the rest stays blank
+#define DROP_AMPLITUDE 8000 // strong enough to stay above WAVE_CREST as the waves spread
 #define DROP_MIN_STEPS 90   // between drops: 3 to 7 seconds at 30 steps a second
 #define DROP_MAX_STEPS 210
 
@@ -122,21 +127,37 @@ static int16_t clamp16(int32_t v) {
     return v > INT16_MAX ? INT16_MAX : v < INT16_MIN ? INT16_MIN : (int16_t)v;
 }
 
+// The previous step's heights of the rows just above and at the one being updated, as the update
+// overwrites them (u_prev takes the new step in place).
+static int16_t old_above[WAVE_W], old_here[WAVE_W];
+
 void lcd_wave_step(void) {
-    // The inside of the grid. A disk's cells count as the cell's own height (no flow into the disk);
+    // The inside of the grid. A disk's cells count as the cell's own value (no flow into the disk);
     // the disks keep away from the edges, so the edge cells needn't be checked.
+    memcpy(old_above, u_prev[0], sizeof(old_above));
     for (int y = 1; y < WAVE_H - 1; y++) {
+        memcpy(old_here, u_prev[y], sizeof(old_here));
         for (int x = 1; x < WAVE_W - 1; x++) {
             if (is_wall(x, y)) {
                 u_prev[y][x] = 0;
                 continue;
             }
+            bool    n = !is_wall(x, y - 1), s = !is_wall(x, y + 1), w = !is_wall(x - 1, y), e = !is_wall(x + 1, y);
             int32_t here = u[y][x];
-            int32_t sum  = (is_wall(x, y - 1) ? here : u[y - 1][x]) + (is_wall(x, y + 1) ? here : u[y + 1][x]) + (is_wall(x - 1, y) ? here : u[y][x - 1]) + (is_wall(x + 1, y) ? here : u[y][x + 1]);
-            int32_t next = sum / 4 + here - u_prev[y][x];
+            int32_t sum  = (n ? u[y - 1][x] : here) + (s ? u[y + 1][x] : here) + (w ? u[y][x - 1] : here) + (e ? u[y][x + 1] : here);
+            int32_t next = sum / 4 + here - old_here[x];
+#if WAVE_VISCOSITY > 0
+            // Viscosity: nu * laplacian of the velocity (u - u_prev). Like air, it damps short
+            // wavelengths much more than long ones, so the grid's pixel-scale ripples die out while
+            // the wavefronts carry on.
+            int32_t v     = here - old_here[x];
+            int32_t lap_v = (n ? u[y - 1][x] - old_above[x] : v) + (s ? u[y + 1][x] - u_prev[y + 1][x] : v) + (w ? u[y][x - 1] - old_here[x - 1] : v) + (e ? u[y][x + 1] - old_here[x + 1] : v) - 4 * v;
+            next += lap_v / WAVE_VISCOSITY;
+#endif
             next -= next / 1024; // a trace of damping, for what integer rounding leaves behind
             u_prev[y][x] = clamp16(next); // u_prev isn't needed any more, so it takes the new step
         }
+        memcpy(old_above, old_here, sizeof(old_above));
     }
     // The ends absorb (Mur's boundary, from the new values just inside them)...
     for (int y = 1; y < WAVE_H - 1; y++) {
@@ -161,8 +182,8 @@ uint16_t lcd_wave_steps(void) {
 }
 
 void lcd_draw_wave(uint8_t half) {
-    // Crests dark, shaded by height with a 4x4 ordered dither; troughs and calm water light.
-    static const uint8_t bayer[4][4] = {{0, 8, 2, 10}, {12, 4, 14, 6}, {3, 11, 1, 9}, {15, 7, 13, 5}};
+    // Crests dark, troughs and calm water light. (Shading the crests with a dither pattern made the
+    // low ripples show up as scattered dots; a plain threshold draws clean wavefronts.)
     st7565_clear();
     const int x0 = half * LCD_WIDTH;
     for (int y = 0; y < LCD_HEIGHT; y++) {
@@ -172,8 +193,7 @@ void lcd_draw_wave(uint8_t half) {
                 st7565_write_pixel(x, y, true);
                 continue;
             }
-            int level = (u[y][gx] - WAVE_CALM) / 80; // calm water stays blank, then 16 shades
-            if (level > bayer[y & 3][gx & 3]) {
+            if (u[y][gx] > WAVE_CREST) {
                 st7565_write_pixel(x, y, true);
             }
         }

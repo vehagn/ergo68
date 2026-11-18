@@ -188,7 +188,11 @@ in integers, 30 steps a second on a 256 x 32 grid (one cell per pixel, both LCDs
   waves stay visible for about 13 seconds this way. With all four edges absorbing they were gone within a second or
   two, since the top and bottom are never more than 16 pixels away. (Mur's condition lets out all but 1% of a pulse's
   energy within 15 seconds where it's used; a few cells of graded damping in front of the edges, a cheap stand-in for
-  a perfectly matched layer, did worse than Mur alone.) A trace of damping clears what integer rounding leaves.
+  a perfectly matched layer, did worse than Mur alone.)
+* **Viscosity** takes out the grid's pixel-scale ripples (numerical dispersion), which made the screen speckled: like
+  air, it damps short wavelengths far more than long ones. Crests above a threshold are drawn solid, with no dither
+  pattern, so faint ripples don't show as scattered dots. `WAVE_CREST` in `lcd_wave.c` trades how long waves stay
+  visible (lower) against how calm the screen gets between drops (higher).
 
 Each half simulates the whole grid; the half on USB picks the random seed (disks and drops) and sends it to the other
 over the cable, and the integer maths gives both exactly the same wave. If the seed doesn't arrive, that half shows a
