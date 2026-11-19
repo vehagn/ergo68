@@ -98,11 +98,11 @@ int main(int argc, char **argv) {
     lcd_draw_layer_screen("Function keys", LCD_CAPS | LCD_NUM | LCD_SCROLL | LCD_SHIFT | LCD_CTRL | LCD_ALT | LCD_GUI);
     dump("Everything on at once (shorter labels)", purple);
 
-    // The wave about five seconds in (as a drop's ring reaches the edges), across both LCDs.
+    // The wave a couple of seconds in, across both LCDs.
     {
         static unsigned char both[LCD_HEIGHT][2 * LCD_WIDTH];
         lcd_wave_start(1); // a seed that places five disks
-        for (int i = 0; i < 104; i++) lcd_wave_step();
+        for (int i = 0; i < 50; i++) lcd_wave_step();
         for (int half = 0; half < 2; half++) {
             lcd_draw_wave(half);
             for (int y = 0; y < LCD_HEIGHT; y++) memcpy(&both[y][half * LCD_WIDTH], pixels[y], LCD_WIDTH);

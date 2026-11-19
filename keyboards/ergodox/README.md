@@ -178,22 +178,20 @@ Then connect the halves and plug the left half into the computer. If you'd rathe
 
 ![The sound wave across both LCDs](lcd_wave.gif)
 
-The wave really is simulated: `lcd_wave.c` solves the 2D wave equation in integers, 20 steps a second, on a grid of
-128 x 16 cells of 2 x 2 pixels across both LCDs. In space it uses the fourth-order Laplacian, which reaches two cells
-out; in time a fourth-order Runge-Kutta method (RK4; Carpenter and Kennedy's five-stage one, which needs only one extra
-value per cell, so it fits in the RAM). Its error from the time step stays well under a percent; with leapfrog, the
-usual step for the wave equation, it was tens of percent.
-
-Drawing brings back the full resolution: each pixel's height is interpolated from the four cells around it, and a pixel
-is dark where it lies on the ridge of a crest (at least as high as its neighbours either side, across the crest). So
-the waves show as thin lines rather than 2 x 2 blocks.
+The wave really is simulated: `lcd_wave.c` solves the 2D wave equation in integers, 20 steps a second, on a 256 x 32
+grid (one cell per pixel, both LCDs), and draws the crests. In space it uses the fourth-order Laplacian, which reaches
+two cells out; in time, leapfrog with a fourth-order correction (the next term of the Taylor series, `c^4 L^2 u / 12`).
+Plain leapfrog sends the short wavelengths at the wrong speed, which shows as trains of broken rings behind each front.
+The correction only pays off if each drop starts exactly at rest, so when a drop falls its value a step back is worked
+out around it, disks and edges included. Against the same animation computed exactly (doubles, much smaller steps),
+about 2% of the dark pixels differ.
 
 * **Drops** are smooth bumps let go at rest, so each spreads as a ring.
-* **Disks** (1 to 5, radius 1 or 2 cells, at random places) are rigid: no flow into them, so waves reflect off them as
+* **Disks** (1 to 5, radius 2 to 4 pixels, at random places) are rigid: no flow into them, so waves reflect off them as
   off a solid object.
 * **A corridor:** the top and bottom edges are rigid too, so waves bounce between them along the strip, and the left
-  and right ends absorb. The grid goes on for 16 hidden cells past each end, and at the far ends the wave follows the
-  one-way wave equation (as in Mur's absorbing boundary condition), so it leaves as if the field carried on.
+  and right ends absorb. The grid goes on for 16 hidden cells past each end, and at the far ends Mur's first-order
+  absorbing boundary condition lets the wave leave as if the field carried on.
 * **Damping** decides how long a drop's waves last: `WAVE_DAMPING` in `lcd_wave.c`, the fraction lost per step (1/128;
   higher numbers last longer).
 
