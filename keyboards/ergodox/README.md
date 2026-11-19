@@ -170,11 +170,9 @@ Then connect the halves and plug the left half into the computer. If you'd rathe
   labels get shorter.
 * **The backlight** takes the layer's colour: white for BASE, blue for NAV, purple for FUNC, green for NUMPAD. It fades
   between colours, fades in behind the *stonegarden* start-up screen, and fades out on *Suspending...*.
-* **When idle** (30 seconds without a key press on either half), both LCDs together show a simulated sound wave: drops
-  fall at random, and their waves spread, scatter off up to five small disks, bounce between the top and bottom and
-  leave at the far ends. The
-  backlight dims to a quarter, and the next key press brings everything back. After 5 minutes without key presses the
-  LCDs turn off.
+* **When idle** (30 seconds without a key press on either half), both LCDs together show a simulated sound wave in one
+  of four scenes, picked at random each time (below). The backlight dims to a quarter, and the next key press brings
+  everything back. After 5 minutes without key presses the LCDs turn off.
 
 ![The sound wave across both LCDs](lcd_wave.gif)
 
@@ -182,31 +180,42 @@ The wave really is simulated: `lcd_wave.c` solves the 2D wave equation in intege
 grid (one cell per pixel, both LCDs), and draws the crests. In space it uses the fourth-order Laplacian, which reaches
 two cells out; in time, leapfrog with a fourth-order correction (the next term of the Taylor series, `c^4 L^2 u / 12`).
 Plain leapfrog sends the short wavelengths at the wrong speed, which shows as trains of broken rings behind each front.
-The correction only pays off if each drop starts exactly at rest, so when a drop falls its value a step back is worked
-out around it, disks and edges included. Against the same animation computed exactly (doubles, much smaller steps),
+The correction only pays off if each wave starts exactly right, so when a drop falls its value a step back is worked
+out around it, walls and edges included. Against the same animation computed exactly (doubles, much smaller steps),
 about 2% of the dark pixels differ.
 
-* **Drops** are smooth bumps let go at rest, so each spreads as a ring.
-* **Disks** (1 to 5, radius 2 to 4 pixels, at random places) are rigid: no flow into them, so waves reflect off them as
-  off a solid object.
+* **Stones:** drops fall at random among 2 to 5 irregular stones (disks with lumps on them), and their rings scatter
+  off them.
+* **Elliptical mirrors:** 1 to 3 ellipses, with drops at their foci. A ring from one focus bounces off the ellipse and
+  meets again at the other focus, then back, until it dies down.
+* **Double slit:** short trains of plane waves run into a wall with two slits. Each slit sends out a half-ring, and the
+  two interfere.
+* **Lens:** the same plane waves pass a lens, a patch where waves travel at 2/3 the speed (drawn dotted). The fronts
+  bend and converge behind it. The fourth-order correction allows for the change in speed exactly
+  (`u_tttt = c^2 L (c^2 L u)`).
+
+* **Drops** are smooth bumps let go at rest, so each spreads as a ring; plane waves start already moving right.
+* **Walls** (stones, mirrors, the slit wall) are rigid: no flow into them, so waves reflect off them as off a solid
+  object.
 * **A corridor:** the top and bottom edges are rigid too, so waves bounce between them along the strip, and the left
   and right ends absorb (Mur's first-order absorbing boundary condition: each end cell is set as if the wave carried
   on past it).
 * **Damping** decides how long a drop's waves last: `WAVE_DAMPING` in `lcd_wave.c`, the fraction lost per step (1/128;
   higher numbers last longer).
 
-Each half simulates the whole grid; the half on USB picks the random seed (disks and drops) and sends it to the other
-over the cable, and the integer maths gives both exactly the same wave. If the seed doesn't arrive, that half shows a
-zen stone garden instead.
+Each half simulates the whole grid; the half on USB picks the random seed (scene, walls and drops) and sends it to the
+other over the cable, and the integer maths gives both exactly the same wave. If the seed doesn't arrive, that half
+shows a zen stone garden instead.
 
 The timings are at the top of the LCD code in `keymap.c` (`LCD_IDLE_MS`, `LCD_WAVE_STEP_MS` and the fades) and in
-`config.h` (`ST7565_TIMEOUT`, when the LCDs turn off); the wave's damping, crest threshold, disks and drops are at the
-top of `lcd_wave.c`.
+`config.h` (`ST7565_TIMEOUT`, when the LCDs turn off); the wave's damping, crest threshold, drops and plane waves are
+at the top of `lcd_wave.c`.
 
 The text is DejaVu Sans Mono, monospaced, rendered without anti-aliasing: bold at 12 px for the big line and 8 px for
-the badges. `lcd_font.h` is generated from the font by `just ergodox-lcd-font` (`scripts/lcd_font.py`), and the drawing is
-in `lcd.c`. `just ergodox-lcd-preview` compiles that same `lcd.c` on your machine and renders every screen to
-`lcd_preview.png` and the wave to `lcd_wave.gif` (the pictures above), so you can see a change before you flash it.
+the badges. `lcd_font.h` is generated from the font by `just ergodox-lcd-font` (`scripts/lcd_font.py`), and the drawing
+is in `lcd.c`. `just ergodox-lcd-preview` compiles that same `lcd.c` on your machine and renders every screen to
+`lcd_preview.png` and the wave, 7.5 seconds of each scene, to `lcd_wave.gif` (the pictures above), so you can see a
+change before you flash it.
 
 ## ErgoDox EZ
 

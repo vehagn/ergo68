@@ -31,13 +31,14 @@ void lcd_draw_layer_screen(const char *name, uint8_t indicators);
 // LCD, 1 for the right. Each frame moves the ripples one pixel outward.
 void lcd_draw_idle(uint8_t half, uint16_t frame);
 
-// The other idle animation (lcd_wave.c): a simulated sound wave across both LCDs, reflecting off up
-// to five small disks and absorbed at the edges. Start it with the same seed on both halves, step
-// it, then draw a half.
-void     lcd_wave_start(uint32_t seed);
-void     lcd_wave_step(void);
-uint32_t lcd_wave_steps(void);
-void     lcd_draw_wave(uint8_t half);
+// The other idle animation (lcd_wave.c): a simulated sound wave across both LCDs, in a scene the
+// seed picks (stones, elliptical mirrors, a double slit or a lens), absorbed at the ends. Start it
+// with the same seed on both halves, step it, then draw a half. lcd_wave_scene() names the scene.
+void        lcd_wave_start(uint32_t seed);
+void        lcd_wave_step(void);
+uint32_t    lcd_wave_steps(void);
+void        lcd_draw_wave(uint8_t half);
+const char *lcd_wave_scene(void);
 
 // Start-up and suspend screens.
 void lcd_draw_splash(void);

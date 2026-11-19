@@ -4,7 +4,7 @@
  * The layer names and colours are the ones in keyboards/ergodox/keymap.c.
  *
  *   preview        every screen, with the idle animations across both LCDs
- *   preview wave   the sound wave, 8 seconds of it across both LCDs
+ *   preview wave   the sound wave across both LCDs, 7.5 seconds of each scene
  *   preview idle   the zen garden, one full cycle across both LCDs
  */
 #include <stdio.h>
@@ -36,6 +36,26 @@ static void dump(const char *name, unsigned rgb) {
     }
 }
 
+// The wave across both LCDs, both halves drawn side by side.
+static void dump_wave(const char *name) {
+    static unsigned char both[LCD_HEIGHT][2 * LCD_WIDTH];
+    for (int half = 0; half < 2; half++) {
+        lcd_draw_wave(half);
+        for (int y = 0; y < LCD_HEIGHT; y++) memcpy(&both[y][half * LCD_WIDTH], pixels[y], LCD_WIDTH);
+    }
+    printf("%s %06x %d\n", name, 0x808080, 2 * LCD_WIDTH);
+    for (int y = 0; y < LCD_HEIGHT; y++) {
+        for (int x = 0; x < 2 * LCD_WIDTH; x++) putchar('0' + both[y][x]);
+        putchar('\n');
+    }
+}
+
+// Seeds that pick each scene, and a step that shows it well.
+static const struct {
+    uint32_t seed;
+    int      step;
+} scenes[] = {{4, 72}, {1, 60}, {2, 64}, {3, 88}};
+
 // Both LCDs side by side, left half first.
 static void dump_idle(const char *name, unsigned rgb, uint16_t frame) {
     static unsigned char both[LCD_HEIGHT][2 * LCD_WIDTH];
@@ -54,21 +74,16 @@ int main(int argc, char **argv) {
     const unsigned white = 0xffffff, blue = 0x0087ff, purple = 0x7400ff, green = 0x20ff00, dim = 0x808080;
 
     if (argc > 1 && strcmp(argv[1], "wave") == 0) {
-        // Both LCDs side by side, every other step for 12 seconds at 20 steps a second.
-        static unsigned char both[LCD_HEIGHT][2 * LCD_WIDTH];
-        lcd_wave_start(1); // a seed that places five disks
-        for (int frame = 0; frame < 120; frame++) {
-            for (int half = 0; half < 2; half++) {
-                lcd_draw_wave(half);
-                for (int y = 0; y < LCD_HEIGHT; y++) memcpy(&both[y][half * LCD_WIDTH], pixels[y], LCD_WIDTH);
+        // Every other step for 7.5 seconds of each scene, at 20 steps a second.
+        for (unsigned i = 0; i < sizeof(scenes) / sizeof(scenes[0]); i++) {
+            lcd_wave_start(scenes[i].seed);
+            for (int frame = 0; frame < 75; frame++) {
+                char name[48];
+                snprintf(name, sizeof(name), "Wave: %s, step %u", lcd_wave_scene(), (unsigned)lcd_wave_steps());
+                dump_wave(name);
+                lcd_wave_step();
+                lcd_wave_step();
             }
-            printf("Wave, step %u %06x %d\n", (unsigned)lcd_wave_steps(), 0x808080, 2 * LCD_WIDTH);
-            for (int y = 0; y < LCD_HEIGHT; y++) {
-                for (int x = 0; x < 2 * LCD_WIDTH; x++) putchar('0' + both[y][x]);
-                putchar('\n');
-            }
-            lcd_wave_step();
-            lcd_wave_step();
         }
         return 0;
     }
@@ -98,20 +113,13 @@ int main(int argc, char **argv) {
     lcd_draw_layer_screen("Function keys", LCD_CAPS | LCD_NUM | LCD_SCROLL | LCD_SHIFT | LCD_CTRL | LCD_ALT | LCD_GUI);
     dump("Everything on at once (shorter labels)", purple);
 
-    // The wave a couple of seconds in, across both LCDs.
-    {
-        static unsigned char both[LCD_HEIGHT][2 * LCD_WIDTH];
-        lcd_wave_start(1); // a seed that places five disks
-        for (int i = 0; i < 50; i++) lcd_wave_step();
-        for (int half = 0; half < 2; half++) {
-            lcd_draw_wave(half);
-            for (int y = 0; y < LCD_HEIGHT; y++) memcpy(&both[y][half * LCD_WIDTH], pixels[y], LCD_WIDTH);
-        }
-        printf("%s %06x %d\n", "Idle: the sound wave, across both LCDs (dimmed backlight)", dim, 2 * LCD_WIDTH);
-        for (int y = 0; y < LCD_HEIGHT; y++) {
-            for (int x = 0; x < 2 * LCD_WIDTH; x++) putchar('0' + both[y][x]);
-            putchar('\n');
-        }
+    // Each of the wave's scenes, a few seconds in.
+    for (unsigned i = 0; i < sizeof(scenes) / sizeof(scenes[0]); i++) {
+        char name[64];
+        lcd_wave_start(scenes[i].seed);
+        for (int step = 0; step < scenes[i].step; step++) lcd_wave_step();
+        snprintf(name, sizeof(name), "Idle: the sound wave, %s (dimmed backlight)", lcd_wave_scene());
+        dump_wave(name);
     }
     dump_idle("Idle, until the wave's seed arrives from the other half: the zen garden", dim, 0);
 
