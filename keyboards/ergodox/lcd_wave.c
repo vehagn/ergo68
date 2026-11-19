@@ -24,11 +24,9 @@
  *
  * Up to five small disks at random places are rigid obstacles (no flow into them), and so are the
  * top and bottom edges: the two LCDs make a corridor the waves bounce along. The Laplacian mirrors
- * the field off them. The left and right ends absorb: the grid goes on for WAVE_PAD hidden cells
- * past each end of the screens, and at the far ends Mur's first-order absorbing boundary condition
- * lets a wave leave as if the field went on. What a slanting wave still sends back from there has
- * the hidden cells to cross twice before it shows, fading on the way. Everywhere, the wave loses a
- * little each step (WAVE_DAMPING).
+ * the field off them. The left and right ends absorb, with Mur's first-order absorbing boundary
+ * condition, which lets a wave leave as if the field went on. Everywhere, the wave loses a little
+ * each step (WAVE_DAMPING).
  *
  * Each half simulates the whole field, so they need no data from each other while it runs: the
  * integer maths is exact and the same on both, so they only have to start from the same random
@@ -41,8 +39,7 @@
 
 #include "st7565.h"
 
-#define WAVE_PAD 16 // hidden cells past each end of the screens
-#define WAVE_W (2 * LCD_WIDTH + 2 * WAVE_PAD)
+#define WAVE_W (2 * LCD_WIDTH)
 #define WAVE_H LCD_HEIGHT
 
 #define WAVE_DAMPING 128     // lose 1/WAVE_DAMPING of the wave per step: higher lasts longer
@@ -128,11 +125,11 @@ static const int8_t dirs[4][2] = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
     return 16 * near - far - 60 * here;
 
 // 12 L f at column x of the middle one of rows (rows y - 2 to y + 2 of f, mirrored at the top and
-// bottom), for a cell away from the disks and the far ends: the fast path.
+// bottom), for a cell away from the disks and the ends: the fast path.
 #define LAP12_FAST(rows, x) \
     (16 * (rows[1][x] + rows[3][x] + rows[2][x - 1] + rows[2][x + 1]) - (rows[0][x] + rows[4][x] + rows[2][x - 2] + rows[2][x + 2]) - 60 * rows[2][x])
 
-// Whether a cell is close enough to a disk or a far end for the stencil to reach it (or in a disk).
+// Whether a cell is close enough to a disk or an end for the stencil to reach it (or in a disk).
 #define NEAR_WALL(x, y) ((x) < 2 || (x) >= WAVE_W - 2 || (near_wall[y][(x) >> 3] & (1 << ((x) & 7))))
 
 // The slow path, from the same rows.
@@ -188,7 +185,7 @@ static void drop(int cx, int cy) {
 }
 
 static void random_drop(void) {
-    drop(WAVE_PAD + 4 + random_below(2 * LCD_WIDTH - 8), 4 + random_below(WAVE_H - 8));
+    drop(4 + random_below(WAVE_W - 8), 4 + random_below(WAVE_H - 8));
     next_drop = step_count + DROP_MIN_STEPS + random_below(DROP_MAX_STEPS - DROP_MIN_STEPS);
 }
 
@@ -201,11 +198,11 @@ void lcd_wave_start(uint32_t seed) {
     wave_u = wave_a, wave_back = wave_b;
     step_count = 0;
 
-    // 1 to DISKS_MAX disks of radius 2 to 4, on the screens, away from the edges and from each other.
+    // 1 to DISKS_MAX disks of radius 2 to 4, away from the edges and from each other.
     int16_t placed[DISKS_MAX][3];
     int     count = 1 + random_below(DISKS_MAX), n = 0;
     for (int tries = 0; n < count && tries < 50; tries++) {
-        int  r = 2 + random_below(3), cx = WAVE_PAD + 8 + random_below(2 * LCD_WIDTH - 16), cy = 5 + random_below(WAVE_H - 10);
+        int  r = 2 + random_below(3), cx = 8 + random_below(WAVE_W - 16), cy = 5 + random_below(WAVE_H - 10);
         bool clear = true;
         for (int i = 0; i < n; i++) {
             int dx = cx - placed[i][0], dy = cy - placed[i][1], gap = r + placed[i][2] + 6;
@@ -260,7 +257,7 @@ void lcd_wave_step(void) {
             int32_t next = 2 * u[x] - was + a_rows[2][x] + DIV_ROUND(lap, LAP2_DIV);
             back[x]      = clamp16(next - DIV_ROUND(next, WAVE_DAMPING));
         }
-        // The far ends absorb, with Mur's boundary from the new values just inside them:
+        // The ends absorb, with Mur's boundary from the new values just inside them:
         // u_next(end) = u(inner) + (c - 1) / (c + 1) (u_next(inner) - u(end)), and (c - 1) / (c + 1) = -1/3.
         back[0]          = clamp16(u[1] - DIV_ROUND(back[1] - u[0], 3));
         back[WAVE_W - 1] = clamp16(u[WAVE_W - 2] - DIV_ROUND(back[WAVE_W - 2] - u[WAVE_W - 1], 3));
@@ -278,7 +275,7 @@ uint32_t lcd_wave_steps(void) {
 
 void lcd_draw_wave(uint8_t half) {
     // Crests dark, everything else light, a byte (8 rows of a column) at a time as the LCD stores them.
-    const int x0 = WAVE_PAD + half * LCD_WIDTH;
+    const int x0 = half * LCD_WIDTH;
     for (int page = 0; page < LCD_HEIGHT / 8; page++) {
         for (int x = 0; x < LCD_WIDTH; x++) {
             uint8_t byte = 0;

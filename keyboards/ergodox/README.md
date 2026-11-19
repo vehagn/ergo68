@@ -190,8 +190,8 @@ about 2% of the dark pixels differ.
 * **Disks** (1 to 5, radius 2 to 4 pixels, at random places) are rigid: no flow into them, so waves reflect off them as
   off a solid object.
 * **A corridor:** the top and bottom edges are rigid too, so waves bounce between them along the strip, and the left
-  and right ends absorb. The grid goes on for 16 hidden cells past each end, and at the far ends Mur's first-order
-  absorbing boundary condition lets the wave leave as if the field carried on.
+  and right ends absorb (Mur's first-order absorbing boundary condition: each end cell is set as if the wave carried
+  on past it).
 * **Damping** decides how long a drop's waves last: `WAVE_DAMPING` in `lcd_wave.c`, the fraction lost per step (1/128;
   higher numbers last longer).
 
